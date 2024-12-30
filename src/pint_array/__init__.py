@@ -1,26 +1,25 @@
 """
-    pint_array
-    ~~~~~~~~~~
+pint_array
+~~~~~~~~~~
 
-    Pint interoperability with array API standard arrays.
+Pint interoperability with array API standard arrays.
 """
 
 from __future__ import annotations
 
-from typing import Generic
-import types
 import textwrap
+import types
+from typing import Generic
 
-from pint.facets.plain import MagnitudeT, PlainQuantity
 from pint import Quantity
+from pint.facets.plain import MagnitudeT, PlainQuantity
 
 __version__ = "0.0.1.dev0"
-__all__ = ["pint_namespace", "__version__"]
+__all__ = ["__version__", "pint_namespace"]
 
 
 def pint_namespace(xp):
-
-    mod = types.ModuleType(f'pint({xp.__name__})')
+    mod = types.ModuleType(f"pint({xp.__name__})")
 
     class ArrayQuantity(Generic[MagnitudeT], PlainQuantity[MagnitudeT]):
         def __init__(self, *args, **kwargs):
@@ -56,14 +55,13 @@ def pint_namespace(xp):
             return self._size
 
         def __array_namespace__(self, api_version=None):
-            if api_version is None or api_version == '2023.12':
+            if api_version is None or api_version == "2023.12":
                 return mod
-            else:
-                raise NotImplementedError()
-            
+            raise NotImplementedError()
+
         def _call_super_method(self, method_name, *args, **kwargs):
             method = getattr(self.magnitude, method_name)
-            args = [getattr(arg, 'magnitude', arg) for arg in args]
+            args = [getattr(arg, "magnitude", arg) for arg in args]
             return method(*args, **kwargs)
 
         ## Indexing ##
@@ -86,7 +84,6 @@ def pint_namespace(xp):
         #     self.mask[key] = getattr(other, 'mask', False)
         #     return self.data.__setitem__(key, getattr(other, 'data', other))
 
-
         ## Visualization ##
         def __repr__(self):
             return (
@@ -108,7 +105,7 @@ def pint_namespace(xp):
         # def __rmatmul__(self, other):
         #     other = MArray(other)
         #     return mod.matmul(other, self)
-            
+
         ## Attributes ##
 
         @property
@@ -134,23 +131,31 @@ def pint_namespace(xp):
     class ArrayUnitQuantity(ArrayQuantity, Quantity):
         pass
 
-
     ## Methods ##
 
     # Methods that return the result of a unary operation as an array
-    unary_names = (
-        ['__abs__', '__floordiv__', '__invert__', '__neg__', '__pos__', '__ceil__']
-    )
+    unary_names = [
+        "__abs__",
+        "__floordiv__",
+        "__invert__",
+        "__neg__",
+        "__pos__",
+        "__ceil__",
+    ]
     for name in unary_names:
+
         def fun(self, name=name):
             return ArrayUnitQuantity(self._call_super_method(name), self.units)
+
         setattr(ArrayQuantity, name, fun)
 
     # Methods that return the result of a unary operation as a Python scalar
-    unary_names_py = ['__bool__', '__complex__', '__float__', '__index__', '__int__']
+    unary_names_py = ["__bool__", "__complex__", "__float__", "__index__", "__int__"]
     for name in unary_names_py:
+
         def fun(self, name=name):
             return self._call_super_method(name)
+
         setattr(ArrayQuantity, name, fun)
 
     # # Methods that return the result of an elementwise binary operation
@@ -186,20 +191,34 @@ def pint_namespace(xp):
         if device is not None:
             raise NotImplementedError("`device` argument is not implemented")
 
-        magnitude = getattr(obj, 'magnitude', obj)
+        magnitude = getattr(obj, "magnitude", obj)
         magnitude = xp.asarray(magnitude, dtype=dtype, device=device, copy=copy)
 
-        units = getattr(obj, 'units', None) if units is None else units
+        units = getattr(obj, "units", None) if units is None else units
 
         return ArrayUnitQuantity(magnitude, units)
+
     mod.asarray = asarray
 
     ## Data Type Functions and Data Types ##
-    dtype_fun_names = ['can_cast', 'finfo', 'iinfo', 'isdtype']
-    dtype_names = ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16',
-                   'uint32', 'uint64', 'float32', 'float64', 'complex64', 'complex128']
-    inspection_fun_names = ['__array_namespace_info__']
-    version_attribute_names = ['__array_api_version__']
+    dtype_fun_names = ["can_cast", "finfo", "iinfo", "isdtype"]
+    dtype_names = [
+        "bool",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float32",
+        "float64",
+        "complex64",
+        "complex128",
+    ]
+    inspection_fun_names = ["__array_namespace_info__"]
+    version_attribute_names = ["__array_api_version__"]
     for name in (
         dtype_fun_names + dtype_names + inspection_fun_names + version_attribute_names
     ):
@@ -211,6 +230,7 @@ def pint_namespace(xp):
         x = asarray(x)
         magnitude = xp.astype(x.magnitude, dtype, copy=copy, device=device)
         return ArrayUnitQuantity(magnitude, x.units)
+
     mod.astype = astype
 
     # Handle functions that ignore units on input and output
@@ -223,12 +243,14 @@ def pint_namespace(xp):
         "argmax",
         "nonzero",
     ):
+
         def func(x, /, *args, func_str=func_str, **kwargs):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
             xp_func = getattr(xp, func_str)
             magnitude = xp_func(x, *args, **kwargs)
             return ArrayUnitQuantity(magnitude, None)
+
         setattr(mod, func_str, func)
 
     # Handle functions with output unit defined by operation
@@ -240,6 +262,7 @@ def pint_namespace(xp):
         "cumulative_sum",
         "sum",
     ):
+
         def func(x, /, *args, func_str=func_str, **kwargs):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
@@ -248,10 +271,11 @@ def pint_namespace(xp):
             magnitude = xp_func(x, *args, **kwargs)
             units = (1 * units + 1 * units).units
             return ArrayUnitQuantity(magnitude, units)
+
         setattr(mod, func_str, func)
 
-    # output_unit="variance":
-    # square of `x.units`,
+    # output_unit="variance":
+    # square of `x.units`,
     # unless non-multiplicative, which raises `OffsetUnitCalculusError`
     def var(x, /, *, axis=None, correction=0.0, keepdims=False):
         x = asarray(x)
@@ -260,6 +284,7 @@ def pint_namespace(xp):
         magnitude = xp.var(x, axis=axis, correction=correction, keepdims=keepdims)
         units = ((1 * units + 1 * units) ** 2).units
         return ArrayUnitQuantity(magnitude, units)
+
     mod.var = var
 
     #  "mul": product of all units in `all_args`

@@ -1,6 +1,6 @@
 """
-    pint_array.funcs
-    ~~~~~~~~~~~~~~~~
+pint_array.funcs
+~~~~~~~~~~~~~~~~
 """
 
 from __future__ import annotations
@@ -64,7 +64,7 @@ def _get_first_input_units(args, kwargs=None):
     for arg in chain(args, kwargs.values()):
         if _is_quantity(arg):
             return arg.units
-        elif _is_sequence_with_quantity_elements(arg):
+        if _is_sequence_with_quantity_elements(arg):
             return next(arg_i.units for arg_i in arg if _is_quantity(arg_i))
     raise TypeError("Expected at least one Quantity; found none")
 
@@ -80,15 +80,14 @@ def convert_arg(arg, pre_calc_units):
     if pre_calc_units is not None:
         if _is_quantity(arg):
             return arg.m_as(pre_calc_units)
-        elif _is_sequence_with_quantity_elements(arg):
+        if _is_sequence_with_quantity_elements(arg):
             return [convert_arg(item, pre_calc_units) for item in arg]
-        elif arg is not None:
+        if arg is not None:
             if pre_calc_units.dimensionless:
                 return pre_calc_units._REGISTRY.Quantity(arg).m_as(pre_calc_units)
-            elif not _is_quantity(arg) and zero_or_nan(arg, True):
+            if not _is_quantity(arg) and zero_or_nan(arg, True):
                 return arg
-            else:
-                raise DimensionalityError("dimensionless", pre_calc_units)
+            raise DimensionalityError("dimensionless", pre_calc_units)
     elif _is_quantity(arg):
         return arg.m
     elif _is_sequence_with_quantity_elements(arg):
@@ -285,7 +284,8 @@ def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=N
         ):
             # the sequence may contain different units, so fall back to element-wise
             return xp.asarray(
-                [func(*func_args) for func_args in zip(*args)], dtype=object
+                [func(*func_args) for func_args in zip(*args, strict=False)],
+                dtype=object,
             )
 
         first_input_units = _get_first_input_units(args, kwargs)
@@ -313,7 +313,7 @@ def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=N
         if output_unit is None:
             # Short circuit and return magnitude alone
             return result_magnitude
-        elif output_unit == "match_input":
+        if output_unit == "match_input":
             result_unit = first_input_units
         elif output_unit in (
             "sum",
@@ -734,7 +734,7 @@ def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=N
 #     implement_prod_func(name)
 
 
-# # Handle mutliplicative functions separately to deal with non-multiplicative units
+# # Handle multiplicative functions separately to deal with non-multiplicative units
 # def _base_unit_if_needed(a):
 #     if a._is_multiplicative:
 #         return a
