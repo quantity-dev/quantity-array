@@ -193,14 +193,24 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
     mod.asarray = asarray
 
-    def sum(x, /, *, axis=None, dtype=None, keepdims=False):
-        x = asarray(x)
-        magnitude = xp.asarray(x.magnitude, copy=True)
-        units = x.units
-        magnitude = xp.sum(x, axis=axis, dtype=dtype, keepdims=keepdims)
-        units = (1 * units + 1 * units).units
-        return ArrayUnitQuantity(magnitude, units)
-    mod.sum = sum
+    # Handle functions with output unit defined by operation
+
+    # output_unit="sum":
+    # `x.units`, unless non-multiplicative, which raises `OffsetUnitCalculusError`
+    for func_str in (
+        "std",
+        "cumulative_sum",
+        "sum",
+    ):
+        def func(x, /, *args, func_str=func_str, **kwargs):
+            x = asarray(x)
+            magnitude = xp.asarray(x.magnitude, copy=True)
+            units = x.units
+            xp_func = getattr(xp, func_str)
+            magnitude = xp_func(x, *args, **kwargs)
+            units = (1 * units + 1 * units).units
+            return ArrayUnitQuantity(magnitude, units)
+        setattr(mod, func_str, func)
 
     def var(x, /, *, axis=None, correction=0.0, keepdims=False):
         x = asarray(x)

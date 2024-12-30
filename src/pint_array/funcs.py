@@ -11,7 +11,6 @@ from array_api_compat import is_array_api_obj
 from pint.compat import is_upcast_type, zero_or_nan
 from pint.errors import DimensionalityError
 from pint.util import iterable, sized
-import array_api_strict as xp
 
 HANDLED_FUNCTIONS = {}
 
@@ -237,7 +236,7 @@ def implements(numpy_func_string, func_type):
     return decorator
 
 
-def implement_func(func_type, func_str, input_units=None, output_unit=None):
+def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=None):
     """Add default-behavior array function to the handled list.
 
     Parameters
