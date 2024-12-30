@@ -193,6 +193,25 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
     mod.asarray = asarray
 
+    ## Data Type Functions and Data Types ##
+    dtype_fun_names = ['can_cast', 'finfo', 'iinfo', 'isdtype']
+    dtype_names = ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16',
+                   'uint32', 'uint64', 'float32', 'float64', 'complex64', 'complex128']
+    inspection_fun_names = ['__array_namespace_info__']
+    version_attribute_names = ['__array_api_version__']
+    for name in (
+        dtype_fun_names + dtype_names + inspection_fun_names + version_attribute_names
+    ):
+        setattr(mod, name, getattr(xp, name))
+
+    def astype(x, dtype, /, *, copy=True, device=None):
+        if device is None and not copy and dtype == x.dtype:
+            return x
+        x = asarray(x)
+        magnitude = xp.astype(x.magnitude, dtype, copy=copy, device=device)
+        return ArrayUnitQuantity(magnitude, x.units)
+    mod.astype = astype
+
     # Handle functions that ignore units on input and output
     for func_str in (
         "ones_like",
