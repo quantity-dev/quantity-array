@@ -21,10 +21,6 @@ def pint_namespace(xp):
     mod = types.ModuleType(f'pint({xp.__name__})')
 
     class ArrayQuantity(Generic[MagnitudeT], PlainQuantity[MagnitudeT]):
-        def __init__(self, *args, xp, **kwargs):
-            super().__init__()
-            self._xp = xp
-
         def __array_namespace__(self):
             return mod
 
@@ -259,13 +255,7 @@ def pint_namespace(xp):
 
 
     class ArrayUnitQuantity(ArrayQuantity, Quantity):
-        def __new__(cls, *args, xp, **kwargs):
-            return super().__new__(cls, *args, **kwargs)
-
-        def __init__(self, *args, xp, **kwargs):
-            ArrayQuantity.__init__(self, *args, xp=xp, **kwargs)
-            Quantity.__init__(self)
-            self._xp = xp
+        pass
 
 
     def asarray(obj, /, *, units=None, dtype=None, device=None, copy=None):
@@ -277,7 +267,7 @@ def pint_namespace(xp):
 
         units = getattr(obj, 'units', None) if units is None else units
 
-        return ArrayUnitQuantity(magnitude, units, xp=xp)
+        return ArrayUnitQuantity(magnitude, units)
     mod.asarray = asarray
 
     def sum(x, /, *, axis=None, dtype=None, keepdims=False):
@@ -286,7 +276,7 @@ def pint_namespace(xp):
         units = x.units
         magnitude = xp.sum(x, axis=axis, dtype=dtype, keepdims=keepdims)
         units = (1 * units + 1 * units).units
-        return ArrayUnitQuantity(magnitude, units, xp=xp)
+        return ArrayUnitQuantity(magnitude, units)
     mod.sum = sum
 
     def var(x, /, *, axis=None, correction=0.0, keepdims=False):
@@ -295,7 +285,7 @@ def pint_namespace(xp):
         units = x.units
         magnitude = xp.var(x, axis=axis, correction=correction, keepdims=keepdims)
         units = ((1 * units + 1 * units) ** 2).units
-        return ArrayUnitQuantity(magnitude, units, xp=xp)
+        return ArrayUnitQuantity(magnitude, units)
     mod.var = var
 
     return mod
