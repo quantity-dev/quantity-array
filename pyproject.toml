@@ -9,11 +9,14 @@ authors = [
 name = "pint-array"
 description = "Pint quantities with array API standard arrays."
 readme = "README.md"
-version = "0.0.1.dev0"
+dynamic = ["version"]
 requires-python = ">=3.9"
 
 [project.urls]
 Homepage = "https://github.com/lucascolley/pint-array"
+
+[tool.hatch]
+version.path = "src/pint_array/__init__.py"
 
 [tool.pixi.project]
 channels = ["conda-forge"]

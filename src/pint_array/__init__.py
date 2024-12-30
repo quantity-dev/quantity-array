@@ -14,7 +14,8 @@ import textwrap
 from pint.facets.plain import MagnitudeT, PlainQuantity
 from pint import Quantity
 
-__all__ = ["pint_namespace", "ArrayUnitQuantity"]
+__version__ = "0.0.1.dev0"
+__all__ = ["pint_namespace", "__version__"]
 
 
 def pint_namespace(xp):

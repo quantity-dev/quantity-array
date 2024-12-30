@@ -588,7 +588,7 @@ packages:
 - pypi: .
   name: pint-array
   version: 0.0.1.dev0
-  sha256: 7c071034358fcc71531580e13df95480efdb108a72e96450804d1a06f9a38172
+  sha256: b6794c760d0a95e001dc7ed9a073e1842f44eb8f340ced7c964453e433898fc4
   requires_python: '>=3.9'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.3.6-pyhd8ed1ab_1.conda
