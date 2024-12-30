@@ -51,8 +51,33 @@ def pint_namespace(xp):
         def size(self):
             return self._size
 
-        def __array_namespace__(self):
-            return mod
+        def __array_namespace__(self, api_version=None):
+            if api_version is None or api_version == '2023.12':
+                return mod
+            else:
+                raise NotImplementedError()
+            
+        ## Attributes ##
+
+        @property
+        def T(self):
+            return ArrayUnitQuantity(self.magnitude.T, self.units)
+
+        @property
+        def mT(self):
+            return ArrayUnitQuantity(self.magnitude.mT, self.units)
+
+        # dlpack
+        def __dlpack_device__(self):
+            return self.magnitude.__dlpack_device__()
+
+        def __dlpack__(self):
+            # really not sure how to define this
+            return self.magnitude.__dlpack__()
+
+        def to_device(self, device, /, *, stream=None):
+            _magnitude = self._magnitude.to_device(device, stream=stream)
+            return ArrayUnitQuantity(_magnitude, self.units)
 
         # def _numpy_method_wrap(self, func, *args, **kwargs):
         #     """Convenience method to wrap on the fly NumPy ndarray methods taking
