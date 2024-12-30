@@ -18,7 +18,7 @@ env:
 
 jobs:
   tests:
-    name: Tests ${{ matrix.environment }} ${{ matrix.runs-on }}
+    name: Tests ${{ matrix.runs-on }} ${{ matrix.environment }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
