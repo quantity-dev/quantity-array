@@ -37,5 +37,8 @@ jobs:
           cache: true
           environments: ${{ matrix.environment }}
 
-      - name: Test package
+      - name: pint-array tests
         run: pixi run --environment=${{ matrix.environment }} tests
+
+      - name: array-api-tests
+        run: pixi run --environment=${{ matrix.environment }} xp-tests

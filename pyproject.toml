@@ -44,6 +44,58 @@ pytest = "*"
 [tool.pixi.feature.tests.tasks]
 tests = "pytest"
 
+[tool.pixi.feature.xp-tests.dependencies]
+pytest = "*"
+pytest-json-report = "*"
+hypothesis = "*"
+ndindex = "*"
+array-api-strict = "*"
+
+[tool.pixi.feature.xp-tests.tasks]
+# clean array-api-tests dir
+clean-xp-tests = { cwd = ".", cmd = "rm -rf array-api-tests" }
+# clone array-api-tests
+clone-xp-tests.cmd = "git clone https://github.com/lucascolley/array-api-tests.git"
+clone-xp-tests.cwd = "."
+clone-xp-tests.depends-on = ["clean-xp-tests"]
+# checkout array-api-tests commit
+checkout-xp-tests.cmd = [
+    "git",
+    "reset",
+    "--hard",
+    "4244965fe1cdf1394143f089beac587307f375fa",
+    "&&",
+    "git",
+    "submodule",
+    "update",
+    "--init",
+]
+checkout-xp-tests.cwd = "array-api-tests"
+checkout-xp-tests.depends-on = ["clone-xp-tests"]
+# run tests
+xp-tests.cmd = [
+    "pytest",
+    "-v",
+    "-rxXfE",
+    "-W",
+    # https://github.com/data-apis/array-api-tests/issues/284
+    "ignore::UserWarning",
+    # https://github.com/data-apis/array-api-tests/issues/329
+    "--disable-extension",
+    "fft",
+    "--disable-extension",
+    "linalg",
+    "--xfails-file",
+    "../xp-tests-xfails.txt",
+    "--max-examples=100",
+    "--derandomize",
+    "--disable-deadline",
+    "array_api_tests/",
+]
+xp-tests.env.ARRAY_API_TESTS_MODULE = "exec('import pint_array, array_api_strict; xp = pint_array.pint_namespace(array_api_strict)')"
+xp-tests.cwd = "array-api-tests"
+xp-tests.depends-on = ["checkout-xp-tests"]
+
 [tool.pixi.feature.py310.dependencies]
 python = "~=3.10.0"
 
@@ -52,9 +104,9 @@ python = "~=3.13.0"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-dev = { features = ["dev", "tests"], solve-group = "default" }
-ci-py310 = ["py310", "tests"]
-ci-py313 = ["py313", "tests"]
+dev = { features = ["dev", "tests", "xp-tests"], solve-group = "default" }
+ci-py310 = ["py310", "tests", "xp-tests"]
+ci-py313 = ["py313", "tests", "xp-tests"]
 
 [tool.ruff]
 target-version = "py310"

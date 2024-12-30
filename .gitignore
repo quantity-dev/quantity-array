@@ -162,3 +162,6 @@ Thumbs.db
 # pixi environments
 .pixi
 *.egg-info
+
+# array-api-tests
+array-api-tests/
