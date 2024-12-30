@@ -33,6 +33,12 @@ ipython = ">=8.31.0,<9"
 [tool.pixi.feature.dev.tasks]
 ipython = "ipython"
 
+[tool.pixi.feature.tests.dependencies]
+pytest = "*"
+
+[tool.pixi.feature.tests.tasks]
+tests = "pytest"
+
 [tool.pixi.environments]
 default = { solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
+dev = { features = ["dev", "tests"], solve-group = "default" }
