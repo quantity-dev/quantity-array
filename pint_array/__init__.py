@@ -7,14 +7,14 @@
 
 from __future__ import annotations
 
-from pint import UnitRegistry
+from .quantity import ArrayUnitQuantity
 
-__all__ = ["get_namespace"]
+__all__ = ["pint_namespace", "ArrayUnitQuantity"]
 
 import types
 
 
-def get_namespace(xp):
+def pint_namespace(xp):
 
     mod = types.ModuleType(f'pint({xp.__name__})')
 
@@ -27,7 +27,7 @@ def get_namespace(xp):
 
         units = getattr(obj, 'units', None) if units is None else units
 
-        return UnitRegistry.Quantity(magnitude, units)
+        return ArrayUnitQuantity(magnitude, units)
     mod.asarray = asarray
 
     def sum(x, /, *, axis=None, dtype=None, keepdims=False):
@@ -36,7 +36,7 @@ def get_namespace(xp):
         units = x.units
         magnitude = xp.sum(x, axis=axis, dtype=dtype, keepdims=keepdims)
         units = (1 * units + 1 * units).units
-        return UnitRegistry.Quantity(magnitude, units)
+        return ArrayUnitQuantity(magnitude, units)
     mod.sum = sum
 
     def var(x, /, *, axis=None, correction=0.0, keepdims=False):
@@ -45,7 +45,7 @@ def get_namespace(xp):
         units = x.units
         magnitude = xp.var(x, axis=axis, correction=correction, keepdims=keepdims)
         units = ((1 * units + 1 * units) ** 2).units
-        return UnitRegistry.Quantity(magnitude, units)
+        return ArrayUnitQuantity(magnitude, units)
     mod.var = var
 
     return mod
