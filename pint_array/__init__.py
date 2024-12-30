@@ -8,14 +8,12 @@
 from __future__ import annotations
 
 from typing import Generic
+import types
 
-# from .quantity import ArrayUnitQuantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
 from pint import Quantity
 
 __all__ = ["pint_namespace", "ArrayUnitQuantity"]
-
-import types
 
 
 def pint_namespace(xp):
@@ -23,13 +21,9 @@ def pint_namespace(xp):
     mod = types.ModuleType(f'pint({xp.__name__})')
 
     class ArrayQuantity(Generic[MagnitudeT], PlainQuantity[MagnitudeT]):
-        """ """
         def __init__(self, *args, xp, **kwargs):
             super().__init__()
             self._xp = xp
-
-        # def __new__(self, *args, **kwargs):
-        #     super().__new__(self, *args, **kwargs)
 
         def __array_namespace__(self):
             return mod
