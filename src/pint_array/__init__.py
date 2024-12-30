@@ -193,6 +193,24 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
     mod.asarray = asarray
 
+    # Handle functions that ignore units on input and output
+    for func_str in (
+        "ones_like",
+        "zeros_like",
+        "empty_like",
+        "argsort",
+        "argmin",
+        "argmax",
+        "nonzero",
+    ):
+        def func(x, /, *args, func_str=func_str, **kwargs):
+            x = asarray(x)
+            magnitude = xp.asarray(x.magnitude, copy=True)
+            xp_func = getattr(xp, func_str)
+            magnitude = xp_func(x, *args, **kwargs)
+            return ArrayUnitQuantity(magnitude, None)
+        setattr(mod, func_str, func)
+
     # Handle functions with output unit defined by operation
 
     # output_unit="sum":
@@ -212,6 +230,9 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, units)
         setattr(mod, func_str, func)
 
+    # output_unit="variance":
+    # square of `x.units`,
+    # unless non-multiplicative, which raises `OffsetUnitCalculusError`
     def var(x, /, *, axis=None, correction=0.0, keepdims=False):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
@@ -220,5 +241,16 @@ def pint_namespace(xp):
         units = ((1 * units + 1 * units) ** 2).units
         return ArrayUnitQuantity(magnitude, units)
     mod.var = var
+
+    #  "mul": product of all units in `all_args`
+    # - "delta": `first_input_units`, unless non-multiplicative, which uses delta version
+    # - "delta,div": like "delta", but divided by all units in `all_args` except the first
+    # - "div": unit of first argument in `all_args` (or dimensionless if not a Quantity) divided
+    #   by all following units
+    # - "square": square of `first_input_units`
+    # - "sqrt": square root of `first_input_units`
+    # - "reciprocal": reciprocal of `first_input_units`
+    # - "size": `first_input_units` raised to the power of `size`
+    # - "invdiv": inverse of `div`, product of all following units divided by first argument unit
 
     return mod
