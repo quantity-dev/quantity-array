@@ -8,7 +8,12 @@ authors = [
 ]
 name = "pint-array"
 description = "Pint quantities with array API standard arrays."
-version = "0.1.0"
+readme = "README.md"
+version = "0.0.1.dev0"
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/lucascolley/pint-array"
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -18,7 +23,13 @@ platforms = ["osx-arm64"]
 pint = ">=0.24.4,<0.25"
 array-api-compat = ">=1.10.0,<2"
 array-api-strict = ">=2.2,<3"
-ipython = ">=8.31.0,<9"
 
 [tool.pixi.pypi-dependencies]
 pint-array = { path = ".", editable = true }
+
+[tool.pixi.feature.dev.dependencies]
+ipython = ">=8.31.0,<9"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
