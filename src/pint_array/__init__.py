@@ -246,7 +246,23 @@ def pint_namespace(xp):
 
     mod.astype = astype
 
-    # Handle functions that ignore units on input and output
+    # Functions with output units equal to input units
+    for func_str in (
+        "max",
+        "min",
+        "mean",
+    ):
+
+        def func(x, /, *args, func_str=func_str, **kwargs):
+            x = asarray(x)
+            magnitude = xp.asarray(x.magnitude, copy=True)
+            xp_func = getattr(xp, func_str)
+            magnitude = xp_func(magnitude, *args, **kwargs)
+            return ArrayUnitQuantity(magnitude, x.units)
+
+        setattr(mod, func_str, func)
+
+    # Functions which ignore units on input and output
     for func_str in (
         "ones_like",
         "zeros_like",
@@ -261,7 +277,7 @@ def pint_namespace(xp):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
             xp_func = getattr(xp, func_str)
-            magnitude = xp_func(x, *args, **kwargs)
+            magnitude = xp_func(magnitude, *args, **kwargs)
             return ArrayUnitQuantity(magnitude, None)
 
         setattr(mod, func_str, func)
@@ -281,7 +297,7 @@ def pint_namespace(xp):
             magnitude = xp.asarray(x.magnitude, copy=True)
             units = x.units
             xp_func = getattr(xp, func_str)
-            magnitude = xp_func(x, *args, **kwargs)
+            magnitude = xp_func(magnitude, *args, **kwargs)
             units = (1 * units + 1 * units).units
             return ArrayUnitQuantity(magnitude, units)
 
@@ -290,15 +306,27 @@ def pint_namespace(xp):
     # output_unit="variance":
     # square of `x.units`,
     # unless non-multiplicative, which raises `OffsetUnitCalculusError`
-    def var(x, /, *, axis=None, correction=0.0, keepdims=False):
+    def var(x, /, *args, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
         units = x.units
-        magnitude = xp.var(x, axis=axis, correction=correction, keepdims=keepdims)
+        magnitude = xp.var(magnitude, *args, **kwargs)
         units = ((1 * units + 1 * units) ** 2).units
         return ArrayUnitQuantity(magnitude, units)
 
     mod.var = var
+
+    # Output unit is the product of the input unit with itself along axis,
+    # or the input unit to the power of the size of the array for axis=None
+    def prod(x, /, *args, axis=None, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        exponent = magnitude.shape[axis] if axis is not None else magnitude.size
+        units = x.units**exponent
+        magnitude = xp.prod(magnitude, *args, axis=axis, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.prod = prod
 
     #  "mul": product of all units in `all_args`
     # - "delta": `first_input_units`, unless non-multiplicative,
