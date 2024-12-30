@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Generic
 import types
+import textwrap
 
 from pint.facets.plain import MagnitudeT, PlainQuantity
 from pint import Quantity
@@ -30,6 +31,8 @@ def pint_namespace(xp):
             self._ndim = magnitude.ndim
             self._shape = magnitude.shape
             self._size = magnitude.size
+
+        # __array_priority__ = 1  # make reflected operators work with NumPy
 
         @property
         def dtype(self):
@@ -56,6 +59,54 @@ def pint_namespace(xp):
                 return mod
             else:
                 raise NotImplementedError()
+            
+        def _call_super_method(self, method_name, *args, **kwargs):
+            method = getattr(self.data, method_name)
+            args = [getattr(arg, 'data', arg) for arg in args]
+            return method(*args, **kwargs)
+
+        ## Indexing ##
+        # def __getitem__(self, key):
+        #     if hasattr(key, 'mask') and xp.any(key.mask):
+        #         message = ("Correct behavior for indexing with a masked array is "
+        #                    "ambiguous, and no convention is supported at this time.")
+        #         raise NotImplementedError(message)
+        #     elif hasattr(key, 'mask'):
+        #         key = key.data
+        #     return MArray(self.data[key], self.mask[key])
+
+        # def __setitem__(self, key, other):
+        #     if hasattr(key, 'mask') and xp.any(key.mask):
+        #         message = ("Correct behavior for indexing with a masked array is "
+        #                    "ambiguous, and no convention is supported at this time.")
+        #         raise NotImplementedError(message)
+        #     elif hasattr(key, 'mask'):
+        #         key = key.data
+        #     self.mask[key] = getattr(other, 'mask', False)
+        #     return self.data.__setitem__(key, getattr(other, 'data', other))
+
+
+        ## Visualization ##
+        def __repr__(self):
+            return (
+                f"<Quantity(\n"
+                f"{textwrap.indent(repr(self._magnitude), '  ')},\n"
+                f"  '{self.units}'\n)>"
+            )
+
+        # ## Linear Algebra Methods ##
+        # def __matmul__(self, other):
+        #     return mod.matmul(self, other)
+
+        # def __imatmul__(self, other):
+        #     res = mod.matmul(self, other)
+        #     self.data[...] = res.data[...]
+        #     self.mask[...] = res.mask[...]
+        #     return
+
+        # def __rmatmul__(self, other):
+        #     other = MArray(other)
+        #     return mod.matmul(other, self)
             
         ## Attributes ##
 
