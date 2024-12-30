@@ -18,12 +18,13 @@ env:
 
 jobs:
   tests:
-    name: Tests
+    name: Tests ${{ matrix.environment }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest]
+        environment: [ci-py310, ci-py313]
+        runs-on: [ubuntu-latest, osx-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
         with:
           pixi-version: v0.39.4
           cache: true
-          environments: [dev]
+          environments: ${{ matrix.environment }}
 
       - name: Test package
-        run: pixi run tests
+        run: pixi run --environment=${{ matrix.environment }} tests
