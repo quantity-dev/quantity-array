@@ -1663,7 +1663,7 @@ packages:
 - pypi: .
   name: pint-array
   version: 0.0.1.dev0
-  sha256: 6b4eca9ad513522156d60dae4186e83749a717f396de6c50cbe1fd9860d72fe9
+  sha256: 97def7b94ad5a1accb78d339d56c038d3d0cec5e1c66fc6bf2a3a47bb2f6144e
   requires_python: '>=3.9'
   editable: true
 - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.3.6-pyhd8ed1ab_1.conda
