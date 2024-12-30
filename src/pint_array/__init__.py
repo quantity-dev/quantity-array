@@ -22,7 +22,7 @@ def pint_namespace(xp):
     mod = types.ModuleType(f"pint({xp.__name__})")
 
     class ArrayQuantity(Generic[MagnitudeT], PlainQuantity[MagnitudeT]):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: ARG002
             super().__init__()
             magnitude = xp.asarray(self._magnitude)
             self._magnitude = magnitude
@@ -189,7 +189,8 @@ def pint_namespace(xp):
 
     def asarray(obj, /, *, units=None, dtype=None, device=None, copy=None):
         if device is not None:
-            raise NotImplementedError("`device` argument is not implemented")
+            msg = "`device` argument is not implemented"
+            raise NotImplementedError(msg)
 
         magnitude = getattr(obj, "magnitude", obj)
         magnitude = xp.asarray(magnitude, dtype=dtype, device=device, copy=copy)
@@ -288,14 +289,18 @@ def pint_namespace(xp):
     mod.var = var
 
     #  "mul": product of all units in `all_args`
-    # - "delta": `first_input_units`, unless non-multiplicative, which uses delta version
-    # - "delta,div": like "delta", but divided by all units in `all_args` except the first
-    # - "div": unit of first argument in `all_args` (or dimensionless if not a Quantity) divided
+    # - "delta": `first_input_units`, unless non-multiplicative,
+    # which uses delta version
+    # - "delta,div": like "delta",
+    # but divided by all units in `all_args` except the first
+    # - "div": unit of first argument in `all_args`
+    # (or dimensionless if not a Quantity) divided
     #   by all following units
     # - "square": square of `first_input_units`
     # - "sqrt": square root of `first_input_units`
     # - "reciprocal": reciprocal of `first_input_units`
     # - "size": `first_input_units` raised to the power of `size`
-    # - "invdiv": inverse of `div`, product of all following units divided by first argument unit
+    # - "invdiv": inverse of `div`,
+    # product of all following units divided by first argument unit
 
     return mod

@@ -5,12 +5,12 @@ pint_array.funcs
 
 from __future__ import annotations
 
-from itertools import chain
+# from itertools import chain
 
-from array_api_compat import is_array_api_obj
-from pint.compat import is_upcast_type, zero_or_nan
-from pint.errors import DimensionalityError
-from pint.util import iterable, sized
+# from array_api_compat import is_array_api_obj
+# from pint.compat import is_upcast_type, zero_or_nan
+# from pint.errors import DimensionalityError
+# from pint.util import iterable, sized
 
 HANDLED_FUNCTIONS = {}
 
@@ -18,99 +18,99 @@ HANDLED_FUNCTIONS = {}
 # Shared Implementation Utilities
 
 
-def _is_quantity(obj):
-    """Test for _units and _magnitude attrs.
+# def _is_quantity(obj):
+#     """Test for _units and _magnitude attrs.
 
-    This is done in place of isinstance(Quantity, arg),
-    which would cause a circular import.
+#     This is done in place of isinstance(Quantity, arg),
+#     which would cause a circular import.
 
-    Parameters
-    ----------
-    obj : Object
+#     Parameters
+#     ----------
+#     obj : Object
 
-    Returns
-    -------
-    bool
-    """
-    return hasattr(obj, "_units") and hasattr(obj, "_magnitude")
-
-
-def _is_sequence_with_quantity_elements(obj):
-    """Test for sequences of quantities.
-
-    Parameters
-    ----------
-    obj : object
-
-    Returns
-    -------
-    True if obj is a sequence and at least one element is a Quantity; False otherwise
-    """
-    if is_array_api_obj(obj) and not obj.dtype.hasobject:
-        # If obj is an array, avoid looping on all elements
-        # if dtype does not have objects
-        return False
-    return (
-        iterable(obj)
-        and sized(obj)
-        and not isinstance(obj, str)
-        and any(_is_quantity(item) for item in obj)
-    )
+#     Returns
+#     -------
+#     bool
+#     """
+#     return hasattr(obj, "_units") and hasattr(obj, "_magnitude")
 
 
-def _get_first_input_units(args, kwargs=None):
-    """Obtain the first valid unit from a collection of args and kwargs."""
-    kwargs = kwargs or {}
-    for arg in chain(args, kwargs.values()):
-        if _is_quantity(arg):
-            return arg.units
-        if _is_sequence_with_quantity_elements(arg):
-            return next(arg_i.units for arg_i in arg if _is_quantity(arg_i))
-    raise TypeError("Expected at least one Quantity; found none")
+# def _is_sequence_with_quantity_elements(obj):
+#     """Test for sequences of quantities.
+
+#     Parameters
+#     ----------
+#     obj : object
+
+#     Returns
+#     -------
+#     True if obj is a sequence and at least one element is a Quantity; False otherwise
+#     """
+#     if is_array_api_obj(obj) and not obj.dtype.hasobject:
+#         # If obj is an array, avoid looping on all elements
+#         # if dtype does not have objects
+#         return False
+#     return (
+#         iterable(obj)
+#         and sized(obj)
+#         and not isinstance(obj, str)
+#         and any(_is_quantity(item) for item in obj)
+#     )
 
 
-def convert_arg(arg, pre_calc_units):
-    """Convert quantities and sequences of quantities to pre_calc_units and strip units.
-
-    Helper function for convert_to_consistent_units. pre_calc_units must be given as a
-    pint Unit or None.
-    """
-    if isinstance(arg, bool):
-        return arg
-    if pre_calc_units is not None:
-        if _is_quantity(arg):
-            return arg.m_as(pre_calc_units)
-        if _is_sequence_with_quantity_elements(arg):
-            return [convert_arg(item, pre_calc_units) for item in arg]
-        if arg is not None:
-            if pre_calc_units.dimensionless:
-                return pre_calc_units._REGISTRY.Quantity(arg).m_as(pre_calc_units)
-            if not _is_quantity(arg) and zero_or_nan(arg, True):
-                return arg
-            raise DimensionalityError("dimensionless", pre_calc_units)
-    elif _is_quantity(arg):
-        return arg.m
-    elif _is_sequence_with_quantity_elements(arg):
-        return [convert_arg(item, pre_calc_units) for item in arg]
-    return arg
+# def _get_first_input_units(args, kwargs=None):
+#     """Obtain the first valid unit from a collection of args and kwargs."""
+#     kwargs = kwargs or {}
+#     for arg in chain(args, kwargs.values()):
+#         if _is_quantity(arg):
+#             return arg.units
+#         if _is_sequence_with_quantity_elements(arg):
+#             return next(arg_i.units for arg_i in arg if _is_quantity(arg_i))
+#     raise TypeError("Expected at least one Quantity; found none")
 
 
-def convert_to_consistent_units(*args, pre_calc_units=None, **kwargs):
-    """Prepare args and kwargs for wrapping by unit conversion and stripping.
+# def convert_arg(arg, pre_calc_units):
+#     """Convert quantities and sequences of quantities to pre_calc_units and strip units.
 
-    If pre_calc_units is not None, takes the args and kwargs for a NumPy function and
-    converts any Quantity or Sequence of Quantities into the units of the first
-    Quantity/Sequence of Quantities and returns the magnitudes. Other args/kwargs (except booleans) are
-    treated as dimensionless Quantities. If pre_calc_units is None, units are simply
-    stripped.
-    """
-    return (
-        tuple(convert_arg(arg, pre_calc_units=pre_calc_units) for arg in args),
-        {
-            key: convert_arg(arg, pre_calc_units=pre_calc_units)
-            for key, arg in kwargs.items()
-        },
-    )
+#     Helper function for convert_to_consistent_units. pre_calc_units must be given as a
+#     pint Unit or None.
+#     """
+#     if isinstance(arg, bool):
+#         return arg
+#     if pre_calc_units is not None:
+#         if _is_quantity(arg):
+#             return arg.m_as(pre_calc_units)
+#         if _is_sequence_with_quantity_elements(arg):
+#             return [convert_arg(item, pre_calc_units) for item in arg]
+#         if arg is not None:
+#             if pre_calc_units.dimensionless:
+#                 return pre_calc_units._REGISTRY.Quantity(arg).m_as(pre_calc_units)
+#             if not _is_quantity(arg) and zero_or_nan(arg, True):
+#                 return arg
+#             raise DimensionalityError("dimensionless", pre_calc_units)
+#     elif _is_quantity(arg):
+#         return arg.m
+#     elif _is_sequence_with_quantity_elements(arg):
+#         return [convert_arg(item, pre_calc_units) for item in arg]
+#     return arg
+
+
+# def convert_to_consistent_units(*args, pre_calc_units=None, **kwargs):
+#     """Prepare args and kwargs for wrapping by unit conversion and stripping.
+
+#     If pre_calc_units is not None, takes the args and kwargs for a NumPy function and
+#     converts any Quantity or Sequence of Quantities into the units of the first
+#     Quantity/Sequence of Quantities and returns the magnitudes. Other args/kwargs (except booleans) are
+#     treated as dimensionless Quantities. If pre_calc_units is None, units are simply
+#     stripped.
+#     """
+#     return (
+#         tuple(convert_arg(arg, pre_calc_units=pre_calc_units) for arg in args),
+#         {
+#             key: convert_arg(arg, pre_calc_units=pre_calc_units)
+#             for key, arg in kwargs.items()
+#         },
+#     )
 
 
 # def unwrap_and_wrap_consistent_units(*args):
@@ -131,211 +131,211 @@ def convert_to_consistent_units(*args, pre_calc_units=None, **kwargs):
 #     )
 
 
-def get_op_output_unit(unit_op, first_input_units, all_args=None, size=None):
-    """Determine resulting unit from given operation.
+# def get_op_output_unit(unit_op, first_input_units, all_args=None, size=None):
+#     """Determine resulting unit from given operation.
 
-    Options for `unit_op`:
+#     Options for `unit_op`:
 
-    - "sum": `first_input_units`, unless non-multiplicative, which raises
-      OffsetUnitCalculusError
-    - "mul": product of all units in `all_args`
-    - "delta": `first_input_units`, unless non-multiplicative, which uses delta version
-    - "delta,div": like "delta", but divided by all units in `all_args` except the first
-    - "div": unit of first argument in `all_args` (or dimensionless if not a Quantity) divided
-      by all following units
-    - "variance": square of `first_input_units`, unless non-multiplicative, which raises
-      OffsetUnitCalculusError
-    - "square": square of `first_input_units`
-    - "sqrt": square root of `first_input_units`
-    - "reciprocal": reciprocal of `first_input_units`
-    - "size": `first_input_units` raised to the power of `size`
-    - "invdiv": inverse of `div`, product of all following units divided by first argument unit
+#     - "sum": `first_input_units`, unless non-multiplicative, which raises
+#       OffsetUnitCalculusError
+#     - "mul": product of all units in `all_args`
+#     - "delta": `first_input_units`, unless non-multiplicative, which uses delta version
+#     - "delta,div": like "delta", but divided by all units in `all_args` except the first
+#     - "div": unit of first argument in `all_args` (or dimensionless if not a Quantity) divided
+#       by all following units
+#     - "variance": square of `first_input_units`, unless non-multiplicative, which raises
+#       OffsetUnitCalculusError
+#     - "square": square of `first_input_units`
+#     - "sqrt": square root of `first_input_units`
+#     - "reciprocal": reciprocal of `first_input_units`
+#     - "size": `first_input_units` raised to the power of `size`
+#     - "invdiv": inverse of `div`, product of all following units divided by first argument unit
 
-    Parameters
-    ----------
-    unit_op :
+#     Parameters
+#     ----------
+#     unit_op :
 
-    first_input_units :
+#     first_input_units :
 
-    all_args :
-         (Default value = None)
-    size :
-         (Default value = None)
+#     all_args :
+#          (Default value = None)
+#     size :
+#          (Default value = None)
 
-    Returns
-    -------
+#     Returns
+#     -------
 
-    """
-    all_args = all_args or []
+#     """
+#     all_args = all_args or []
 
-    if unit_op == "sum":
-        result_unit = (1 * first_input_units + 1 * first_input_units).units
-    elif unit_op == "mul":
-        product = first_input_units._REGISTRY.parse_units("")
-        for x in all_args:
-            if hasattr(x, "units"):
-                product *= x.units
-        result_unit = product
-    elif unit_op == "delta":
-        result_unit = (1 * first_input_units - 1 * first_input_units).units
-    elif unit_op == "delta,div":
-        product = (1 * first_input_units - 1 * first_input_units).units
-        for x in all_args[1:]:
-            if hasattr(x, "units"):
-                product /= x.units
-        result_unit = product
-    elif unit_op == "div":
-        # Start with first arg in numerator, all others in denominator
-        product = getattr(
-            all_args[0], "units", first_input_units._REGISTRY.parse_units("")
-        )
-        for x in all_args[1:]:
-            if hasattr(x, "units"):
-                product /= x.units
-        result_unit = product
-    elif unit_op == "variance":
-        result_unit = ((1 * first_input_units + 1 * first_input_units) ** 2).units
-    elif unit_op == "square":
-        result_unit = first_input_units**2
-    elif unit_op == "sqrt":
-        result_unit = first_input_units**0.5
-    elif unit_op == "cbrt":
-        result_unit = first_input_units ** (1 / 3)
-    elif unit_op == "reciprocal":
-        result_unit = first_input_units**-1
-    elif unit_op == "size":
-        if size is None:
-            raise ValueError('size argument must be given when unit_op=="size"')
-        result_unit = first_input_units**size
-    elif unit_op == "invdiv":
-        # Start with first arg in numerator, all others in denominator
-        product = getattr(
-            all_args[0], "units", first_input_units._REGISTRY.parse_units("")
-        )
-        for x in all_args[1:]:
-            if hasattr(x, "units"):
-                product /= x.units
-        result_unit = product**-1
-    else:
-        raise ValueError(f"Output unit method {unit_op} not understood")
+#     if unit_op == "sum":
+#         result_unit = (1 * first_input_units + 1 * first_input_units).units
+#     elif unit_op == "mul":
+#         product = first_input_units._REGISTRY.parse_units("")
+#         for x in all_args:
+#             if hasattr(x, "units"):
+#                 product *= x.units
+#         result_unit = product
+#     elif unit_op == "delta":
+#         result_unit = (1 * first_input_units - 1 * first_input_units).units
+#     elif unit_op == "delta,div":
+#         product = (1 * first_input_units - 1 * first_input_units).units
+#         for x in all_args[1:]:
+#             if hasattr(x, "units"):
+#                 product /= x.units
+#         result_unit = product
+#     elif unit_op == "div":
+#         # Start with first arg in numerator, all others in denominator
+#         product = getattr(
+#             all_args[0], "units", first_input_units._REGISTRY.parse_units("")
+#         )
+#         for x in all_args[1:]:
+#             if hasattr(x, "units"):
+#                 product /= x.units
+#         result_unit = product
+#     elif unit_op == "variance":
+#         result_unit = ((1 * first_input_units + 1 * first_input_units) ** 2).units
+#     elif unit_op == "square":
+#         result_unit = first_input_units**2
+#     elif unit_op == "sqrt":
+#         result_unit = first_input_units**0.5
+#     elif unit_op == "cbrt":
+#         result_unit = first_input_units ** (1 / 3)
+#     elif unit_op == "reciprocal":
+#         result_unit = first_input_units**-1
+#     elif unit_op == "size":
+#         if size is None:
+#             raise ValueError('size argument must be given when unit_op=="size"')
+#         result_unit = first_input_units**size
+#     elif unit_op == "invdiv":
+#         # Start with first arg in numerator, all others in denominator
+#         product = getattr(
+#             all_args[0], "units", first_input_units._REGISTRY.parse_units("")
+#         )
+#         for x in all_args[1:]:
+#             if hasattr(x, "units"):
+#                 product /= x.units
+#         result_unit = product**-1
+#     else:
+#         raise ValueError(f"Output unit method {unit_op} not understood")
 
-    return result_unit
-
-
-def implements(numpy_func_string, func_type):
-    """Register a function implementation for Quantity objects."""
-
-    def decorator(func):
-        if func_type == "function":
-            HANDLED_FUNCTIONS[numpy_func_string] = func
-        else:
-            raise ValueError(f"Invalid func_type {func_type}")
-        return func
-
-    return decorator
+#     return result_unit
 
 
-def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=None):
-    """Add default-behavior array function to the handled list.
+# def implements(numpy_func_string, func_type):
+#     """Register a function implementation for Quantity objects."""
 
-    Parameters
-    ----------
-    func_type : str
-        "function" for array functions
-    func_str : str
-        String representing the name of the array function to add
-    input_units : pint.Unit or str or None
-        Parameter to control how the function downcasts to magnitudes of arguments. If
-        `pint.Unit`, converts all args and kwargs to this unit before downcasting to
-        magnitude. If "all_consistent", converts all args and kwargs to the unit of the
-        first Quantity in args and kwargs before downcasting to magnitude. If some
-        other string, the string is parsed as a unit, and all args and kwargs are
-        converted to that unit. If None, units are stripped without conversion.
-    output_unit : pint.Unit or str or None
-        Parameter to control the unit of the output. If `pint.Unit`, output is wrapped
-        with that unit. If "match_input", output is wrapped with the unit of the first
-        Quantity in args and kwargs. If a string representing a unit operation defined
-        in `get_op_output_unit`, output is wrapped by the unit determined by
-        `get_op_output_unit`. If some other string, the string is parsed as a unit,
-        which becomes the unit of the output. If None, the bare magnitude is returned.
+#     def decorator(func):
+#         if func_type == "function":
+#             HANDLED_FUNCTIONS[numpy_func_string] = func
+#         else:
+#             raise ValueError(f"Invalid func_type {func_type}")
+#         return func
+
+#     return decorator
 
 
-    """
-    # # If NumPy is not available, do not attempt implement that which does not exist
-    # if np is None:
-    #     return
+# def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=None):
+#     """Add default-behavior array function to the handled list.
 
-    # Handle functions in submodules
-    func_str_split = func_str.split(".")
-    func = getattr(xp, func_str_split[0], None)
-    # If the function is not available, do not attempt to implement it
-    if func is None:
-        return
-    for func_str_piece in func_str_split[1:]:
-        func = getattr(func, func_str_piece)
+#     Parameters
+#     ----------
+#     func_type : str
+#         "function" for array functions
+#     func_str : str
+#         String representing the name of the array function to add
+#     input_units : pint.Unit or str or None
+#         Parameter to control how the function downcasts to magnitudes of arguments. If
+#         `pint.Unit`, converts all args and kwargs to this unit before downcasting to
+#         magnitude. If "all_consistent", converts all args and kwargs to the unit of the
+#         first Quantity in args and kwargs before downcasting to magnitude. If some
+#         other string, the string is parsed as a unit, and all args and kwargs are
+#         converted to that unit. If None, units are stripped without conversion.
+#     output_unit : pint.Unit or str or None
+#         Parameter to control the unit of the output. If `pint.Unit`, output is wrapped
+#         with that unit. If "match_input", output is wrapped with the unit of the first
+#         Quantity in args and kwargs. If a string representing a unit operation defined
+#         in `get_op_output_unit`, output is wrapped by the unit determined by
+#         `get_op_output_unit`. If some other string, the string is parsed as a unit,
+#         which becomes the unit of the output. If None, the bare magnitude is returned.
 
-    @implements(func_str, func_type)
-    def implementation(*args, **kwargs):
-        if func_str in ["multiply", "true_divide", "divide", "floor_divide"] and any(
-            [
-                not _is_quantity(arg) and _is_sequence_with_quantity_elements(arg)
-                for arg in args
-            ]
-        ):
-            # the sequence may contain different units, so fall back to element-wise
-            return xp.asarray(
-                [func(*func_args) for func_args in zip(*args, strict=False)],
-                dtype=object,
-            )
 
-        first_input_units = _get_first_input_units(args, kwargs)
-        if input_units == "all_consistent":
-            # Match all input args/kwargs to same units
-            stripped_args, stripped_kwargs = convert_to_consistent_units(
-                *args, pre_calc_units=first_input_units, **kwargs
-            )
-        else:
-            if isinstance(input_units, str):
-                # Conversion requires Unit, not str
-                pre_calc_units = first_input_units._REGISTRY.parse_units(input_units)
-            else:
-                pre_calc_units = input_units
+#     """
+#     # # If NumPy is not available, do not attempt implement that which does not exist
+#     # if np is None:
+#     #     return
 
-            # Match all input args/kwargs to input_units, or if input_units is None,
-            # simply strip units
-            stripped_args, stripped_kwargs = convert_to_consistent_units(
-                *args, pre_calc_units=pre_calc_units, **kwargs
-            )
+#     # Handle functions in submodules
+#     func_str_split = func_str.split(".")
+#     func = getattr(xp, func_str_split[0], None)
+#     # If the function is not available, do not attempt to implement it
+#     if func is None:
+#         return
+#     for func_str_piece in func_str_split[1:]:
+#         func = getattr(func, func_str_piece)
 
-        # Determine result through plain numpy function on stripped arguments
-        result_magnitude = func(*stripped_args, **stripped_kwargs)
+#     @implements(func_str, func_type)
+#     def implementation(*args, **kwargs):
+#         if func_str in ["multiply", "true_divide", "divide", "floor_divide"] and any(
+#             [
+#                 not _is_quantity(arg) and _is_sequence_with_quantity_elements(arg)
+#                 for arg in args
+#             ]
+#         ):
+#             # the sequence may contain different units, so fall back to element-wise
+#             return xp.asarray(
+#                 [func(*func_args) for func_args in zip(*args, strict=False)],
+#                 dtype=object,
+#             )
 
-        if output_unit is None:
-            # Short circuit and return magnitude alone
-            return result_magnitude
-        if output_unit == "match_input":
-            result_unit = first_input_units
-        elif output_unit in (
-            "sum",
-            "mul",
-            "delta",
-            "delta,div",
-            "div",
-            "invdiv",
-            "variance",
-            "square",
-            "sqrt",
-            "cbrt",
-            "reciprocal",
-            "size",
-        ):
-            result_unit = get_op_output_unit(
-                output_unit, first_input_units, tuple(chain(args, kwargs.values()))
-            )
-        else:
-            result_unit = output_unit
+#         first_input_units = _get_first_input_units(args, kwargs)
+#         if input_units == "all_consistent":
+#             # Match all input args/kwargs to same units
+#             stripped_args, stripped_kwargs = convert_to_consistent_units(
+#                 *args, pre_calc_units=first_input_units, **kwargs
+#             )
+#         else:
+#             if isinstance(input_units, str):
+#                 # Conversion requires Unit, not str
+#                 pre_calc_units = first_input_units._REGISTRY.parse_units(input_units)
+#             else:
+#                 pre_calc_units = input_units
 
-        return first_input_units._REGISTRY.Quantity(result_magnitude, result_unit)
+#             # Match all input args/kwargs to input_units, or if input_units is None,
+#             # simply strip units
+#             stripped_args, stripped_kwargs = convert_to_consistent_units(
+#                 *args, pre_calc_units=pre_calc_units, **kwargs
+#             )
+
+#         # Determine result through plain numpy function on stripped arguments
+#         result_magnitude = func(*stripped_args, **stripped_kwargs)
+
+#         if output_unit is None:
+#             # Short circuit and return magnitude alone
+#             return result_magnitude
+#         if output_unit == "match_input":
+#             result_unit = first_input_units
+#         elif output_unit in (
+#             "sum",
+#             "mul",
+#             "delta",
+#             "delta,div",
+#             "div",
+#             "invdiv",
+#             "variance",
+#             "square",
+#             "sqrt",
+#             "cbrt",
+#             "reciprocal",
+#             "size",
+#         ):
+#             result_unit = get_op_output_unit(
+#                 output_unit, first_input_units, tuple(chain(args, kwargs.values()))
+#             )
+#         else:
+#             result_unit = output_unit
+
+#         return first_input_units._REGISTRY.Quantity(result_magnitude, result_unit)
 
 
 # """
@@ -1021,16 +1021,16 @@ def implement_func(func_type, func_str, input_units=None, output_unit=None, xp=N
 #     implement_func("function", func_str, input_units=None, output_unit=None)
 
 # Handle functions with output unit defined by operation
-for func_str in (
-    "std",
-    "nanstd",
-    "sum",
-    "nansum",
-    "cumsum",
-    "nancumsum",
-    "linalg.norm",
-):
-    implement_func("function", func_str, input_units=None, output_unit="sum")
+# for func_str in (
+#     "std",
+#     "nanstd",
+#     "sum",
+#     "nansum",
+#     "cumsum",
+#     "nancumsum",
+#     "linalg.norm",
+# ):
+#     implement_func("function", func_str, input_units=None, output_unit="sum")
 # for func_str in ("diff", "ediff1d"):
 #     implement_func("function", func_str, input_units=None, output_unit="delta")
 # for func_str in ("gradient",):
@@ -1041,16 +1041,16 @@ for func_str in (
 #     implement_func("function", func_str, input_units=None, output_unit="variance")
 
 
-def array_wrap(func_type, func, args, kwargs, types):
-    """Return the result from an array function as wrapped by Pint."""
+# def array_wrap(func_type, func, args, kwargs, types):
+#     """Return the result from an array function as wrapped by Pint."""
 
-    if func_type == "function":
-        handled = HANDLED_FUNCTIONS
-        # Need to handle functions in submodules
-        name = ".".join(func.__module__.split(".")[1:] + [func.__name__])
-    else:
-        raise ValueError(f"Invalid func_type {func_type}")
+#     if func_type == "function":
+#         handled = HANDLED_FUNCTIONS
+#         # Need to handle functions in submodules
+#         name = ".".join(func.__module__.split(".")[1:] + [func.__name__])
+#     else:
+#         raise ValueError(f"Invalid func_type {func_type}")
 
-    if name not in handled or any(is_upcast_type(t) for t in types):
-        return NotImplemented
-    return handled[name](*args, **kwargs)
+#     if name not in handled or any(is_upcast_type(t) for t in types):
+#         return NotImplemented
+#     return handled[name](*args, **kwargs)

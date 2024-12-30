@@ -32,8 +32,10 @@ pint-array = { path = ".", editable = true }
 
 [tool.pixi.feature.dev.dependencies]
 ipython = ">=8.31.0,<9"
+pre-commit = "*"
 
 [tool.pixi.feature.dev.tasks]
+lint = "pre-commit run --all-files"
 ipython = "ipython"
 
 [tool.pixi.feature.tests.dependencies]
@@ -56,6 +58,7 @@ ci-py313 = ["py313", "tests"]
 
 [tool.ruff]
 target-version = "py310"
+exclude = ["src/pint_array/funcs.py"]
 
 [tool.ruff.lint]
 extend-select = [
