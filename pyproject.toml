@@ -10,7 +10,7 @@ name = "pint-array"
 description = "Pint quantities with array API standard arrays."
 readme = "README.md"
 dynamic = ["version"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.urls]
 Homepage = "https://github.com/lucascolley/pint-array"

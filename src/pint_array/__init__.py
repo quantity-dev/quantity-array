@@ -5,8 +5,6 @@ pint_array
 Pint interoperability with array API standard arrays.
 """
 
-from __future__ import annotations
-
 import importlib
 import sys
 import textwrap
@@ -327,6 +325,24 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
 
     mod.prod = prod
+
+    for func_str in (
+        "any",
+        "all",
+    ):
+
+        def func(x, /, *args, func_str=func_str, **kwargs):
+            x = asarray(x)
+            magnitude = xp.asarray(x.magnitude, copy=True)
+            if x._is_multiplicative:
+                xp_func = getattr(xp, func_str)
+                magnitude = xp_func(magnitude, *args, **kwargs)
+                return ArrayUnitQuantity(magnitude, None)
+
+            msg = "Boolean value of Quantity with offset unit is ambiguous."
+            raise ValueError(msg)
+
+        setattr(mod, func_str, func)
 
     #  "mul": product of all units in `all_args`
     # - "delta": `first_input_units`, unless non-multiplicative,
