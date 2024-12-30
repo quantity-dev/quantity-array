@@ -55,23 +55,21 @@ array-api-strict = "*"
 # clean array-api-tests dir
 clean-xp-tests = { cwd = ".", cmd = "rm -rf array-api-tests" }
 # clone array-api-tests
-clone-xp-tests.cmd = "git clone https://github.com/lucascolley/array-api-tests.git"
-clone-xp-tests.cwd = "."
-clone-xp-tests.depends-on = ["clean-xp-tests"]
-# checkout array-api-tests commit
-checkout-xp-tests.cmd = [
+clone-xp-tests.cmd = [
     "git",
-    "reset",
-    "--hard",
-    "4244965fe1cdf1394143f089beac587307f375fa",
+    "clone",
+    "https://github.com/data-apis/array-api-tests.git",
+    "&&",
+    "cd",
+    "array-api-tests",
     "&&",
     "git",
     "submodule",
     "update",
     "--init",
 ]
-checkout-xp-tests.cwd = "array-api-tests"
-checkout-xp-tests.depends-on = ["clone-xp-tests"]
+clone-xp-tests.cwd = "."
+clone-xp-tests.depends-on = ["clean-xp-tests"]
 # run tests
 xp-tests.cmd = [
     "pytest",
@@ -92,9 +90,9 @@ xp-tests.cmd = [
     "--disable-deadline",
     "array_api_tests/",
 ]
-xp-tests.env.ARRAY_API_TESTS_MODULE = "exec('import pint_array, array_api_strict; xp = pint_array.pint_namespace(array_api_strict)')"
+xp-tests.env.ARRAY_API_TESTS_MODULE = "pint_array.array_api_strict"
 xp-tests.cwd = "array-api-tests"
-xp-tests.depends-on = ["checkout-xp-tests"]
+xp-tests.depends-on = ["clone-xp-tests"]
 
 [tool.pixi.feature.py310.dependencies]
 python = "~=3.10.0"

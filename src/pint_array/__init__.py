@@ -7,6 +7,8 @@ Pint interoperability with array API standard arrays.
 
 from __future__ import annotations
 
+import importlib
+import sys
 import textwrap
 import types
 from typing import Generic
@@ -16,6 +18,16 @@ from pint.facets.plain import MagnitudeT, PlainQuantity
 
 __version__ = "0.0.1.dev0"
 __all__ = ["__version__", "pint_namespace"]
+
+
+def __getattr__(name):
+    try:
+        xp = importlib.import_module(name)
+        mod = pint_namespace(xp)
+        sys.modules[f"marray.{name}"] = mod
+        return mod
+    except ModuleNotFoundError as e:
+        raise AttributeError(str(e)) from None
 
 
 def pint_namespace(xp):
