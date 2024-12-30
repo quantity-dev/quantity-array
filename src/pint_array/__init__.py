@@ -21,6 +21,36 @@ def pint_namespace(xp):
     mod = types.ModuleType(f'pint({xp.__name__})')
 
     class ArrayQuantity(Generic[MagnitudeT], PlainQuantity[MagnitudeT]):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+            magnitude = xp.asarray(self._magnitude)
+            self._magnitude = magnitude
+            self._dtype = magnitude.dtype
+            self._device = magnitude.device
+            self._ndim = magnitude.ndim
+            self._shape = magnitude.shape
+            self._size = magnitude.size
+
+        @property
+        def dtype(self):
+            return self._dtype
+
+        @property
+        def device(self):
+            return self._device
+
+        @property
+        def ndim(self):
+            return self._ndim
+
+        @property
+        def shape(self):
+            return self._shape
+
+        @property
+        def size(self):
+            return self._size
+
         def __array_namespace__(self):
             return mod
 
