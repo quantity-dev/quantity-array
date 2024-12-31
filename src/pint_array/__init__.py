@@ -231,50 +231,54 @@ def pint_namespace(xp):
         setattr(mod, func_str, fun)
 
     ## Manipulation Functions ##
-    # first_arg_arrays = {'broadcast_arrays', 'concat', 'stack', 'meshgrid'}
-    # output_arrays = {'broadcast_arrays', 'unstack', 'meshgrid'}
+    first_arg_arrays = {"broadcast_arrays", "concat", "stack", "meshgrid"}
+    output_arrays = {"broadcast_arrays", "unstack", "meshgrid"}
 
-    # def get_manip_fun(name):
-    #     def manip_fun(x, *args, **kwargs):
-    #         x = (asarray(x) if name not in first_arg_arrays
-    #              else [asarray(xi) for xi in x])
-    #         mask = (x.mask if name not in first_arg_arrays
-    #                 else [xi.mask for xi in x])
-    #         data = (x.data if name not in first_arg_arrays
-    #                 else [xi.data for xi in x])
+    def get_manip_fun(func_str):
+        def manip_fun(x, *args, **kwargs):
+            xp_func = getattr(xp, func_str)
 
-    #         fun = getattr(xp, name)
+            if func_str not in first_arg_arrays:
+                x = asarray(x)
+                magnitude = xp.asarray(x.magnitude, copy=True)
+                units = x.units
+                magnitude = xp_func(magnitude, *args, **kwargs)
 
-    #         if name == "repeat":
-    #             args = list(args)
-    #             repeats = args[0]
-    #             if hasattr(repeats, 'mask') and xp.any(repeats.mask):
-    #                 message = (
-    #                   "Correct behavior when `repeats` is a masked array is "
-    #                   "ambiguous, and no convention is supported at this time.")
-    #                 raise NotImplementedError(message)
-    #             elif hasattr(repeats, 'mask'):
-    #                 repeats = repeats.data
-    #             args[0] = repeats
+            else:
+                x = [asarray(x_i) for x_i in x]
+                units = x[0].units
+                magnitude = [xp.asarray(x[0].magnitude, copy=True)]
+                for x_i in x[1:]:
+                    magnitude.append(x_i.m_as(units))
+                magnitude = xp_func(*magnitude, *args, **kwargs)
 
-    #         if name in {'broadcast_arrays', 'meshgrid'}:
-    #             res = fun(*data, *args, **kwargs)
-    #             mask = fun(*mask, *args, **kwargs)
-    #         else:
-    #             res = fun(data, *args, **kwargs)
-    #             mask = fun(mask, *args, **kwargs)
+            if name in output_arrays:
+                return tuple(
+                    ArrayUnitQuantity(magnitude_i, units) for magnitude_i in magnitude
+                )
+            return ArrayUnitQuantity(magnitude, units)
 
-    #         out = (MArray(res, mask) if name not in output_arrays
-    #                else tuple(MArray(resi, maski) for resi, maski in zip(res, mask)))
-    #         return out
-    #     return manip_fun
+        return manip_fun
 
-    # creation_manip_functions = ['tril', 'triu', 'meshgrid']
-    # manip_names = ['broadcast_arrays', 'broadcast_to', 'concat', 'expand_dims',
-    #                'flip', 'moveaxis', 'permute_dims', 'repeat', 'reshape',
-    #                'roll', 'squeeze', 'stack', 'tile', 'unstack']
-    # for name in manip_names + creation_manip_functions:
-    #     setattr(mod, name, get_manip_fun(name))
+    creation_manip_functions = ["tril", "triu", "meshgrid"]
+    manip_names = [
+        "broadcast_arrays",
+        "broadcast_to",
+        "concat",
+        "expand_dims",
+        "flip",
+        "moveaxis",
+        "permute_dims",
+        "repeat",
+        "reshape",
+        "roll",
+        "squeeze",
+        "stack",
+        "tile",
+        "unstack",
+    ]
+    for name in manip_names + creation_manip_functions:
+        setattr(mod, name, get_manip_fun(name))
 
     ## Data Type Functions and Data Types ##
     dtype_fun_names = ["can_cast", "finfo", "iinfo", "isdtype"]
