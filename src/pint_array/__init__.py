@@ -198,6 +198,11 @@ def pint_namespace(xp):
     #         return self
     #     setattr(ArrayQuantity, name, fun)
 
+    ## Constants ##
+    constant_names = ["e", "inf", "nan", "newaxis", "pi"]
+    for name in constant_names:
+        setattr(mod, name, getattr(xp, name))
+
     def asarray(obj, /, *, units=None, dtype=None, device=None, copy=None):
         if device is not None:
             msg = "`device` argument is not implemented"
