@@ -11,10 +11,8 @@ import textwrap
 import types
 from typing import Generic
 
-from array_api_compat import is_array_api_obj
 from pint import Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
-from pint.util import iterable, sized
 
 __version__ = "0.0.1.dev0"
 __all__ = ["__version__", "pint_namespace"]
