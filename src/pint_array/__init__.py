@@ -6,7 +6,9 @@ Pint interoperability with array API standard arrays.
 """
 
 import collections
+import contextlib
 import importlib
+import inspect
 import sys
 import textwrap
 import types
@@ -672,5 +674,31 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
 
     mod.prod = prod
+
+    preface = [
+        "The following is the documentation for the corresponding "
+        f"attribute of `{xp.__name__}`.",
+        "The behavior on pint-wrapped arrays is the same for dimensionless "
+        "quantities, and may differ for quantities with units.\n\n",
+    ]
+    preface = "\n".join(preface)
+    for attribute in mod.__dict__:
+        # Add documentation if it is not already present
+        if getattr(mod, attribute).__doc__:
+            continue
+
+        xp_attr = getattr(xp, attribute, None)
+        mod_attr = getattr(mod, attribute, None)
+        if xp_attr is not None and mod_attr is not None:
+            if hasattr(xp_attr, "__doc__"):
+                with contextlib.suppress(AttributeError, TypeError):
+                    xp_doc = xp_attr.__doc__
+                    getattr(mod, attribute).__doc__ = preface + xp_doc
+
+            with contextlib.suppress(ValueError, TypeError):
+                mod_attr.__signature__ = inspect.signature(xp_attr)
+
+            with contextlib.suppress(AttributeError, TypeError):
+                mod_attr.__name__ = xp_attr.__name__
 
     return mod
