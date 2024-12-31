@@ -11,8 +11,10 @@ import textwrap
 import types
 from typing import Generic
 
+from array_api_compat import is_array_api_obj
 from pint import Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
+from pint.util import iterable, sized
 
 __version__ = "0.0.1.dev0"
 __all__ = ["__version__", "pint_namespace"]
@@ -211,6 +213,24 @@ def pint_namespace(xp):
 
     mod.asarray = asarray
 
+    creation_functions = [
+        "arange",
+        "empty",
+        "eye",
+        "from_dlpack",
+        "full",
+        "linspace",
+        "ones",
+        "zeros",
+    ]
+    for func_str in creation_functions:
+
+        def fun(*args, func_str=func_str, units=None, **kwargs):
+            magnitude = getattr(xp, func_str)(*args, **kwargs)
+            return ArrayUnitQuantity(magnitude, units)
+
+        setattr(mod, func_str, fun)
+
     ## Data Type Functions and Data Types ##
     dtype_fun_names = ["can_cast", "finfo", "iinfo", "isdtype"]
     dtype_names = [
@@ -279,6 +299,140 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, None)
 
         setattr(mod, func_str, func)
+
+    elementwise_one_array = [
+        "abs",
+        "acos",
+        "acosh",
+        "asin",
+        "asinh",
+        "atan",
+        "atanh",
+        "bitwise_invert",
+        "ceil",
+        "conj",
+        "cos",
+        "cosh",
+        "exp",
+        "expm1",
+        "floor",
+        "imag",
+        "isfinite",
+        "isinf",
+        "isnan",
+        "log",
+        "log1p",
+        "log2",
+        "log10",
+        "logical_not",
+        "negative",
+        "positive",
+        "real",
+        "round",
+        "sign",
+        "signbit",
+        "sin",
+        "sinh",
+        "square",
+        "sqrt",
+        "tan",
+        "tanh",
+        "trunc",
+    ]
+    for func_str in elementwise_one_array:
+
+        def fun(x, /, *args, func_str=func_str, **kwargs):
+            x = asarray(x)
+            magnitude = xp.asarray(x.magnitude, copy=True)
+            magnitude = getattr(xp, func_str)(x, *args, **kwargs)
+            return ArrayUnitQuantity(magnitude, x.units)
+
+        setattr(mod, func_str, fun)
+
+    def _is_quantity(obj):
+        """Test for _units and _magnitude attrs.
+
+        This is done in place of isinstance(Quantity, arg),
+        which would cause a circular import.
+
+        Parameters
+        ----------
+        obj : Object
+
+        Returns
+        -------
+        bool
+        """
+        return hasattr(obj, "_units") and hasattr(obj, "_magnitude")
+
+    def _is_sequence_with_quantity_elements(obj):
+        """Test for sequences of quantities.
+
+        Parameters
+        ----------
+        obj : object
+
+        Returns
+        -------
+        True if obj is a sequence and at least one element is a Quantity;
+        False otherwise
+        """
+        if is_array_api_obj(obj) and not obj.dtype.hasobject:
+            # If obj is an array, avoid looping on all elements
+            # if dtype does not have objects
+            return False
+        return (
+            iterable(obj)
+            and sized(obj)
+            and not isinstance(obj, str)
+            and any(_is_quantity(item) for item in obj)
+        )
+
+    elementwise_two_arrays = [
+        "add",
+        "atan2",
+        "bitwise_and",
+        "bitwise_left_shift",
+        "bitwise_or",
+        "bitwise_right_shift",
+        "bitwise_xor",
+        "copysign",
+        "divide",
+        "equal",
+        "floor_divide",
+        "greater",
+        "greater_equal",
+        "hypot",
+        "less",
+        "less_equal",
+        "logaddexp",
+        "logical_and",
+        "logical_or",
+        "logical_xor",
+        "maximum",
+        "minimum",
+        "multiply",
+        "not_equal",
+        "pow",
+        "remainder",
+        "subtract",
+    ]
+    for func_str in elementwise_two_arrays:
+
+        def fun(x1, x2, /, *args, func_str=func_str, **kwargs):
+            x1 = asarray(x1)
+            x2 = asarray(x2)
+
+            units = x1.units
+
+            x1_magnitude = xp.asarray(x1.magnitude, copy=True)
+            x2_magnitude = x2.m_as(units)
+
+            xp_func = getattr(xp, func_str)
+            magnitude = xp_func(x1_magnitude, x2_magnitude, *args, **kwargs)
+            return ArrayUnitQuantity(magnitude, units)
+
+        setattr(mod, func_str, fun)
 
     # Handle functions with output unit defined by operation
 
