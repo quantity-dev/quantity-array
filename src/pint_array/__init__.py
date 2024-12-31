@@ -298,6 +298,100 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, func)
 
+    # strip_unit_input_output_ufuncs = ["isnan", "isinf", "isfinite", "signbit", "sign"]
+    # matching_input_bare_output_ufuncs = [
+    #     "equal",
+    #     "greater",
+    #     "greater_equal",
+    #     "less",
+    #     "less_equal",
+    #     "not_equal",
+    # ]
+    # matching_input_set_units_output_ufuncs = {"arctan2": "radian"}
+    # set_units_ufuncs = {
+    #     "cumprod": ("", ""),
+    #     "arccos": ("", "radian"),
+    #     "arcsin": ("", "radian"),
+    #     "arctan": ("", "radian"),
+    #     "arccosh": ("", "radian"),
+    #     "arcsinh": ("", "radian"),
+    #     "arctanh": ("", "radian"),
+    #     "exp": ("", ""),
+    #     "expm1": ("", ""),
+    #     "exp2": ("", ""),
+    #     "log": ("", ""),
+    #     "log10": ("", ""),
+    #     "log1p": ("", ""),
+    #     "log2": ("", ""),
+    #     "sin": ("radian", ""),
+    #     "cos": ("radian", ""),
+    #     "tan": ("radian", ""),
+    #     "sinh": ("radian", ""),
+    #     "cosh": ("radian", ""),
+    #     "tanh": ("radian", ""),
+    #     "radians": ("degree", "radian"),
+    #     "degrees": ("radian", "degree"),
+    #     "deg2rad": ("degree", "radian"),
+    #     "rad2deg": ("radian", "degree"),
+    #     "logaddexp": ("", ""),
+    #     "logaddexp2": ("", ""),
+    # }
+    # # TODO (#905 follow-up):
+    # #   while this matches previous behavior, some of these have optional arguments
+    #     that
+    # #   should not be Quantities. This should be fixed, and tests using these optional
+    # #   arguments should be added.
+    # matching_input_copy_units_output_ufuncs = [
+    #     "compress",
+    #     "conj",
+    #     "conjugate",
+    #     "copy",
+    #     "diagonal",
+    #     "max",
+    #     "mean",
+    #     "min",
+    #     "ptp",
+    #     "ravel",
+    #     "repeat",
+    #     "reshape",
+    #     "round",
+    #     "squeeze",
+    #     "swapaxes",
+    #     "take",
+    #     "trace",
+    #     "transpose",
+    #     "roll",
+    #     "ceil",
+    #     "floor",
+    #     "hypot",
+    #     "rint",
+    #     "copysign",
+    #     "nextafter",
+    #     "trunc",
+    #     "absolute",
+    #     "positive",
+    #     "negative",
+    #     "maximum",
+    #     "minimum",
+    #     "fabs",
+    # ]
+    # copy_units_output_ufuncs = ["ldexp", "fmod", "mod", "remainder"]
+    # op_units_output_ufuncs = {
+    #     "var": "square",
+    #     "multiply": "mul",
+    #     "true_divide": "div",
+    #     "divide": "div",
+    #     "floor_divide": "div",
+    #     "sqrt": "sqrt",
+    #     "cbrt": "cbrt",
+    #     "square": "square",
+    #     "reciprocal": "reciprocal",
+    #     "std": "sum",
+    #     "sum": "sum",
+    #     "cumsum": "sum",
+    #     "matmul": "mul",
+    # }
+
     elementwise_one_array = [
         "abs",
         "acos",
@@ -392,6 +486,28 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, units)
 
         setattr(mod, func_str, fun)
+
+    def get_linalg_fun(func_str):
+        def linalg_fun(x1, x2, /, **kwargs):
+            x1 = asarray(x1)
+            x2 = asarray(x2)
+            magnitude1 = xp.asarray(x1.magnitude, copy=True)
+            magnitude2 = xp.asarray(x2.magnitude, copy=True)
+
+            xp_func = getattr(xp, func_str)
+            magnitude = xp_func(magnitude1, magnitude2, **kwargs)
+            return ArrayUnitQuantity(magnitude, x1.units * x2.units)
+
+        return linalg_fun
+
+    linalg_names = ["matmul", "tensordot", "vecdot"]
+    for name in linalg_names:
+        setattr(mod, name, get_linalg_fun(name))
+
+    def matrix_transpose(x):
+        return x.mT
+
+    mod.matrix_transpose = matrix_transpose
 
     # Handle functions with output unit defined by operation
 
