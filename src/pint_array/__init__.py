@@ -5,6 +5,7 @@ pint_array
 Pint interoperability with array API standard arrays.
 """
 
+import collections
 import importlib
 import sys
 import textwrap
@@ -554,6 +555,34 @@ def pint_namespace(xp):
         return x.mT
 
     mod.matrix_transpose = matrix_transpose
+
+    ## Set Functions ##
+    def get_set_fun(func_str):
+        def set_fun(x, /):
+            x = asarray(x)
+            units = x.units
+            magnitude = xp.asarray(x.magnitude, copy=True)
+
+            xp_func = getattr(xp, func_str)
+            res = xp_func(magnitude)
+            if func_str == "unique_values":
+                return ArrayUnitQuantity(res, units)
+
+            fields = res._fields
+            name_tuple = res.__class__.__name__
+            result_class = collections.namedtuple(name_tuple, fields)
+
+            result_list = []
+            for res_i, field_i in zip(res, fields, strict=False):
+                units_i = units if field_i == "values" else None
+                result_list.append(ArrayUnitQuantity(res_i, units_i))
+            return result_class(*result_list)
+
+        return set_fun
+
+    unique_names = ["unique_values", "unique_counts", "unique_inverse", "unique_all"]
+    for name in unique_names:
+        setattr(mod, name, get_set_fun(name))
 
     # Handle functions with output unit defined by operation
 
