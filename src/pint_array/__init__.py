@@ -349,45 +349,6 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, fun)
 
-    def _is_quantity(obj):
-        """Test for _units and _magnitude attrs.
-
-        This is done in place of isinstance(Quantity, arg),
-        which would cause a circular import.
-
-        Parameters
-        ----------
-        obj : Object
-
-        Returns
-        -------
-        bool
-        """
-        return hasattr(obj, "_units") and hasattr(obj, "_magnitude")
-
-    def _is_sequence_with_quantity_elements(obj):
-        """Test for sequences of quantities.
-
-        Parameters
-        ----------
-        obj : object
-
-        Returns
-        -------
-        True if obj is a sequence and at least one element is a Quantity;
-        False otherwise
-        """
-        if is_array_api_obj(obj) and not obj.dtype.hasobject:
-            # If obj is an array, avoid looping on all elements
-            # if dtype does not have objects
-            return False
-        return (
-            iterable(obj)
-            and sized(obj)
-            and not isinstance(obj, str)
-            and any(_is_quantity(item) for item in obj)
-        )
-
     elementwise_two_arrays = [
         "add",
         "atan2",
@@ -455,6 +416,24 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, func)
 
+    for func_str in (
+        "any",
+        "all",
+    ):
+
+        def func(x, /, *args, func_str=func_str, **kwargs):
+            x = asarray(x)
+            magnitude = xp.asarray(x.magnitude, copy=True)
+            if x._is_multiplicative:
+                xp_func = getattr(xp, func_str)
+                magnitude = xp_func(magnitude, *args, **kwargs)
+                return ArrayUnitQuantity(magnitude, None)
+
+            msg = "Boolean value of Quantity with offset unit is ambiguous."
+            raise ValueError(msg)
+
+        setattr(mod, func_str, func)
+
     # output_unit="variance":
     # square of `x.units`,
     # unless non-multiplicative, which raises `OffsetUnitCalculusError`
@@ -479,38 +458,5 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
 
     mod.prod = prod
-
-    for func_str in (
-        "any",
-        "all",
-    ):
-
-        def func(x, /, *args, func_str=func_str, **kwargs):
-            x = asarray(x)
-            magnitude = xp.asarray(x.magnitude, copy=True)
-            if x._is_multiplicative:
-                xp_func = getattr(xp, func_str)
-                magnitude = xp_func(magnitude, *args, **kwargs)
-                return ArrayUnitQuantity(magnitude, None)
-
-            msg = "Boolean value of Quantity with offset unit is ambiguous."
-            raise ValueError(msg)
-
-        setattr(mod, func_str, func)
-
-    #  "mul": product of all units in `all_args`
-    # - "delta": `first_input_units`, unless non-multiplicative,
-    # which uses delta version
-    # - "delta,div": like "delta",
-    # but divided by all units in `all_args` except the first
-    # - "div": unit of first argument in `all_args`
-    # (or dimensionless if not a Quantity) divided
-    #   by all following units
-    # - "square": square of `first_input_units`
-    # - "sqrt": square root of `first_input_units`
-    # - "reciprocal": reciprocal of `first_input_units`
-    # - "size": `first_input_units` raised to the power of `size`
-    # - "invdiv": inverse of `div`,
-    # product of all following units divided by first argument unit
 
     return mod
