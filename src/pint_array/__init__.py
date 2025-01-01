@@ -292,7 +292,15 @@ def pint_namespace(xp):
         setattr(mod, name, get_manip_fun(name))
 
     ## Data Type Functions and Data Types ##
-    dtype_fun_names = ["can_cast", "finfo", "iinfo", "isdtype"]
+    dtype_fun_names = ["can_cast", "finfo", "iinfo", "result_type"]
+    for func_str in dtype_fun_names:
+
+        def fun(*args, func_str=func_str, **kwargs):
+            args = [(arg.magnitude if hasattr(arg, "units") else arg) for arg in args]
+            return getattr(xp, func_str)(*args, **kwargs)
+
+        setattr(mod, func_str, fun)
+
     dtype_names = [
         "bool",
         "int8",
@@ -307,6 +315,7 @@ def pint_namespace(xp):
         "float64",
         "complex64",
         "complex128",
+        "isdtype",  # function, but can treat as dtype here
     ]
     inspection_fun_names = ["__array_namespace_info__"]
     version_attribute_names = ["__array_api_version__"]
