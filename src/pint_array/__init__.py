@@ -325,6 +325,9 @@ def pint_namespace(xp):
         "max",
         "min",
         "mean",
+        "ones_like",
+        "zeros_like",
+        "empty_like",
     ):
 
         def func(x, /, *args, func_str=func_str, **kwargs):
@@ -338,9 +341,6 @@ def pint_namespace(xp):
 
     # Functions which ignore units on input and output
     for func_str in (
-        "ones_like",
-        "zeros_like",
-        "empty_like",
         "argsort",
         "argmin",
         "argmax",
