@@ -105,19 +105,17 @@ def pint_namespace(xp):
                 f"  '{self.units}'\n)>"
             )
 
-        # ## Linear Algebra Methods ##
-        # def __matmul__(self, other):
-        #     return mod.matmul(self, other)
+        ## Linear Algebra Methods ##
+        def __matmul__(self, other):
+            return mod.matmul(self, other)
 
-        # def __imatmul__(self, other):
-        #     res = mod.matmul(self, other)
-        #     self.data[...] = res.data[...]
-        #     self.mask[...] = res.mask[...]
-        #     return
+        def __imatmul__(self, other):
+            res = mod.matmul(self, other)
+            self.magnitude[...] = res.magnitude[...]
+            self.units = res.units
 
-        # def __rmatmul__(self, other):
-        #     other = MArray(other)
-        #     return mod.matmul(other, self)
+        def __rmatmul__(self, other):
+            return mod.matmul(other, self)
 
         ## Attributes ##
 
@@ -133,9 +131,11 @@ def pint_namespace(xp):
         def __dlpack_device__(self):
             return self.magnitude.__dlpack_device__()
 
-        def __dlpack__(self):
+        def __dlpack__(self, **kwargs):
             # really not sure how to define this
-            return self.magnitude.__dlpack__()
+            return self.magnitude.__dlpack__(**kwargs)
+
+        __dlpack__.__signature__ = inspect.signature(xp.empty(0).__dlpack__)
 
         def to_device(self, device, /, *, stream=None):
             _magnitude = self._magnitude.to_device(device, stream=stream)
@@ -171,34 +171,81 @@ def pint_namespace(xp):
 
         setattr(ArrayQuantity, name, fun)
 
-    # # Methods that return the result of an elementwise binary operation
-    # binary_names = ['__add__', '__sub__', '__and__', '__eq__', '__ge__', '__gt__',
-    #                 '__le__', '__lshift__', '__lt__', '__mod__', '__mul__', '__ne__',
-    #                 '__or__', '__pow__', '__rshift__', '__sub__', '__truediv__',
-    #                 '__xor__'] + ['__divmod__', '__floordiv__']
-    # # Methods that return the result of an elementwise binary operation (reflected)
-    # rbinary_names = ['__radd__', '__rand__', '__rdivmod__', '__rfloordiv__',
-    #                 '__rlshift__', '__rmod__', '__rmul__', '__ror__', '__rpow__',
-    #                 '__rrshift__', '__rsub__', '__rtruediv__', '__rxor__']
-    # for name in binary_names + rbinary_names:
-    #     def fun(self, other, name=name):
-    #         mask = (self.mask | other.mask) if hasattr(other, 'mask') else self.mask
-    #         data = self._call_super_method(name, other)
-    #         return ArrayUnitQuantity(data, mask)
-    #     setattr(ArrayQuantity, name, fun)
+    # Methods that return the result of an elementwise binary operation
+    binary_names = [
+        "__add__",
+        "__sub__",
+        "__and__",
+        "__eq__",
+        "__ge__",
+        "__gt__",
+        "__le__",
+        "__lshift__",
+        "__lt__",
+        "__mod__",
+        "__mul__",
+        "__ne__",
+        "__or__",
+        "__pow__",
+        "__rshift__",
+        "__sub__",
+        "__truediv__",
+        "__xor__",
+        "__divmod__",
+        "__floordiv__",
+    ]
+    # Methods that return the result of an elementwise binary operation (reflected)
+    rbinary_names = [
+        "__radd__",
+        "__rand__",
+        "__rdivmod__",
+        "__rfloordiv__",
+        "__rlshift__",
+        "__rmod__",
+        "__rmul__",
+        "__ror__",
+        "__rpow__",
+        "__rrshift__",
+        "__rsub__",
+        "__rtruediv__",
+        "__rxor__",
+    ]
+    for name in binary_names + rbinary_names:
 
-    # # In-place methods
-    # desired_names = ['__iadd__', '__iand__', '__ifloordiv__', '__ilshift__',
-    #                 '__imod__', '__imul__', '__ior__', '__ipow__', '__irshift__',
-    #                 '__isub__', '__itruediv__', '__ixor__']
-    # for name in desired_names:
-    #     def fun(self, other, name=name, **kwargs):
-    #         if hasattr(other, 'mask'):
-    #             # self.mask |= other.mask doesn't work because mask has no setter
-    #             self.mask.__ior__(other.mask)
-    #         self._call_super_method(name, other)
-    #         return self
-    #     setattr(ArrayQuantity, name, fun)
+        def method(self, other, name=name):
+            units = self.units
+            magnitude_other = other.m_as(units) if hasattr(other, "units") else other
+            magnitude = self._call_super_method(name, magnitude_other)
+            # FIXME: correct units for op
+            return ArrayUnitQuantity(magnitude, units)
+
+        setattr(ArrayQuantity, name, method)
+
+    # In-place methods
+    desired_names = [
+        "__iadd__",
+        "__iand__",
+        "__ifloordiv__",
+        "__ilshift__",
+        "__imod__",
+        "__imul__",
+        "__ior__",
+        "__ipow__",
+        "__irshift__",
+        "__isub__",
+        "__itruediv__",
+        "__ixor__",
+    ]
+    for name in desired_names:
+
+        def method(self, other, name=name):
+            units = self.units
+            magnitude_other = other.m_as(units) if hasattr(other, "units") else other
+            magnitude = self._call_super_method(name, magnitude_other)
+            # FIXME: correct units for op
+            return ArrayUnitQuantity(magnitude, units)
+
+        setattr(ArrayQuantity, name, method)
 
     ## Constants ##
     constant_names = ["e", "inf", "nan", "newaxis", "pi"]
