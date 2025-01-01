@@ -300,10 +300,14 @@ def pint_namespace(xp):
 
             else:
                 x = [asarray(x_i) for x_i in x]
-                units = x[0].units
-                magnitude = [xp.asarray(x[0].magnitude, copy=True)]
-                for x_i in x[1:]:
-                    magnitude.append(x_i.m_as(units))
+                if len(x) == 0:
+                    magnitude = xp.empty(0)
+                    units = None
+                else:
+                    units = x[0].units
+                    magnitude = [xp.asarray(x[0].magnitude, copy=True)]
+                    for x_i in x[1:]:
+                        magnitude.append(x_i.m_as(units))
 
             if func_str == "repeat" and hasattr(
                 repeats := (args := list(args))[0], "units"
