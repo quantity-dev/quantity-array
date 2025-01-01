@@ -370,18 +370,17 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, func)
 
-    # def searchsorted(x1, x2, /, *, side='left', sorter=None):
-    #     if sorter is not None:
-    #         x1 = take(x1, sorter)
+    def searchsorted(x1, x2, /, *, side="left", sorter=None):
+        if sorter is not None:
+            x1 = take(x1, sorter)
 
-    #     mask_count = xp.cumulative_sum(xp.astype(x1.mask, xp.int64))
-    #     x1_compressed = x1.data[~x1.mask]
-    #     count = xp.zeros(x1_compressed.size+1, dtype=xp.int64)
-    #     count[:-1] = mask_count[~x1.mask]
-    #     count[-1] = count[-2]
-    #     i = xp.searchsorted(x1_compressed, x2.data, side=side)
-    #     j = i + xp.take(count, i)
-    #     return MArray(j, mask=x2.mask)
+        magnitude_x1 = xp.asarray(x1.magnitude, copy=True)
+        magnitude_x2 = x2.m_as(x1.units)
+
+        magnitude = xp.searchsorted(magnitude_x1, magnitude_x2, side=side)
+        return ArrayUnitQuantity(magnitude, None)
+
+    mod.searchsorted = searchsorted
 
     # ignore units of condition, convert x2 to units of x1
     def where(condition, x1, x2, /):
@@ -392,7 +391,6 @@ def pint_namespace(xp):
         magnitude = xp.where(condition.magnitude, x1.magnitude, x2.m_as(units))
         return ArrayUnitQuantity(magnitude, units)
 
-    # mod.searchsorted = searchsorted
     mod.where = where
 
     # strip_unit_input_output_ufuncs = ["isnan", "isinf", "isfinite", "signbit", "sign"]
