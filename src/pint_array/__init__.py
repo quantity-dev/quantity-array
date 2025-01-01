@@ -240,6 +240,7 @@ def pint_namespace(xp):
     ## Manipulation Functions ##
     first_arg_arrays = {"broadcast_arrays", "concat", "stack", "meshgrid"}
     output_arrays = {"broadcast_arrays", "unstack", "meshgrid"}
+    arbitrary_num_arrays = {"broadcast_arrays", "meshgrid"}
 
     def get_manip_fun(func_str):
         def manip_fun(x, *args, **kwargs):
@@ -249,7 +250,6 @@ def pint_namespace(xp):
                 x = asarray(x)
                 magnitude = xp.asarray(x.magnitude, copy=True)
                 units = x.units
-                magnitude = xp_func(magnitude, *args, **kwargs)
 
             else:
                 x = [asarray(x_i) for x_i in x]
@@ -257,7 +257,11 @@ def pint_namespace(xp):
                 magnitude = [xp.asarray(x[0].magnitude, copy=True)]
                 for x_i in x[1:]:
                     magnitude.append(x_i.m_as(units))
+
+            if func_str in arbitrary_num_arrays:
                 magnitude = xp_func(*magnitude, *args, **kwargs)
+            else:
+                magnitude = xp_func(magnitude, *args, **kwargs)
 
             if name in output_arrays:
                 return tuple(
