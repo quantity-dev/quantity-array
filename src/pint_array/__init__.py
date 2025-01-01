@@ -729,7 +729,6 @@ def pint_namespace(xp):
     # output_unit="sum":
     # `x.units`, unless non-multiplicative, which raises `OffsetUnitCalculusError`
     for func_str in (
-        "std",
         "cumulative_sum",
         "sum",
     ):
@@ -744,6 +743,17 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, units)
 
         setattr(mod, func_str, func)
+
+    # output_unit="delta"
+    def std(x, /, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        units = x.units
+        magnitude = xp.std(magnitude, **kwargs)
+        units = (1 * units - 1 * units).units
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.std = std
 
     for func_str in (
         "any",
@@ -764,14 +774,14 @@ def pint_namespace(xp):
         setattr(mod, func_str, func)
 
     # output_unit="variance":
-    # square of `x.units`,
+    # square of delta `x.units`,
     # unless non-multiplicative, which raises `OffsetUnitCalculusError`
     def var(x, /, *args, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
         units = x.units
         magnitude = xp.var(magnitude, *args, **kwargs)
-        units = ((1 * units + 1 * units) ** 2).units
+        units = ((1 * units - 1 * units) ** 2).units
         return ArrayUnitQuantity(magnitude, units)
 
     mod.var = var
