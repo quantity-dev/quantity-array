@@ -714,6 +714,17 @@ def pint_namespace(xp):
 
     mod.prod = prod
 
+    def clip(x, /, min=None, max=None):
+        x = asarray(x)
+        units = x.units
+        magnitude_x = xp.asarray(x.magnitude, copy=True)
+        magnitude_min = min.m_as(units) if hasattr(min, "units") else min
+        magnitude_max = max.m_as(units) if hasattr(max, "units") else max
+        magnitude = xp.clip(magnitude_x, magnitude_min, magnitude_max)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.clip = clip
+
     preface = [
         "The following is the documentation for the corresponding "
         f"attribute of `{xp.__name__}`.",
