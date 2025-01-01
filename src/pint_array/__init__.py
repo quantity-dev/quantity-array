@@ -584,6 +584,13 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, fun)
 
+    ## Indexing Functions
+    def take(x, indices, /, **kwargs):
+        magnitude = xp.take(x.magnitude, indices.magnitude, **kwargs)
+        return ArrayUnitQuantity(magnitude, x.units)
+
+    mod.take = take
+
     def get_linalg_fun(func_str):
         def linalg_fun(x1, x2, /, **kwargs):
             x1 = asarray(x1)
