@@ -315,7 +315,7 @@ def pint_namespace(xp):
             else:
                 magnitude = xp_func(magnitude, *args, **kwargs)
 
-            if name in output_arrays:
+            if func_str in output_arrays:
                 return tuple(
                     ArrayUnitQuantity(magnitude_i, units) for magnitude_i in magnitude
                 )
