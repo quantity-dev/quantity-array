@@ -305,6 +305,11 @@ def pint_namespace(xp):
                 for x_i in x[1:]:
                     magnitude.append(x_i.m_as(units))
 
+            if func_str == "repeat" and hasattr(
+                repeats := (args := list(args))[0], "units"
+            ):
+                args[0] = repeats.magnitude
+
             if func_str in arbitrary_num_arrays:
                 magnitude = xp_func(*magnitude, *args, **kwargs)
             else:
