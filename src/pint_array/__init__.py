@@ -77,25 +77,24 @@ def pint_namespace(xp):
             args = [getattr(arg, "magnitude", arg) for arg in args]
             return method(*args, **kwargs)
 
-        ## Indexing ##
-        # def __getitem__(self, key):
-        #     if hasattr(key, 'mask') and xp.any(key.mask):
-        #         message = ("Correct behavior for indexing with a masked array is "
-        #                    "ambiguous, and no convention is supported at this time.")
-        #         raise NotImplementedError(message)
-        #     elif hasattr(key, 'mask'):
-        #         key = key.data
-        #     return MArray(self.data[key], self.mask[key])
+        def _validate_key(self, key):
+            if isinstance(key, tuple):
+                return tuple(self._validate_key(key_i) for key_i in key)
+            if hasattr(key, "units"):
+                key = key.magnitude
+            return key
 
-        # def __setitem__(self, key, other):
-        #     if hasattr(key, 'mask') and xp.any(key.mask):
-        #         message = ("Correct behavior for indexing with a masked array is "
-        #                    "ambiguous, and no convention is supported at this time.")
-        #         raise NotImplementedError(message)
-        #     elif hasattr(key, 'mask'):
-        #         key = key.data
-        #     self.mask[key] = getattr(other, 'mask', False)
-        #     return self.data.__setitem__(key, getattr(other, 'data', other))
+        ## Indexing ##
+        def __getitem__(self, key):
+            key = self._validate_key(key)
+            return ArrayUnitQuantity(self.magnitude[key], self.units)
+
+        def __setitem__(self, key, other):
+            key = self._validate_key(key)
+            magnitude_other = (
+                other.m_as(self.units) if hasattr(other, "units") else other
+            )
+            return self.magnitude.__setitem__(key, magnitude_other)
 
         def __iter__(self):
             return iter(self.magnitude)
