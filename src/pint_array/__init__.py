@@ -332,6 +332,7 @@ def pint_namespace(xp):
         "ones_like",
         "zeros_like",
         "empty_like",
+        "full_like",
     ):
 
         def func(x, /, *args, func_str=func_str, **kwargs):
