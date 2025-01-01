@@ -97,6 +97,9 @@ def pint_namespace(xp):
         #     self.mask[key] = getattr(other, 'mask', False)
         #     return self.data.__setitem__(key, getattr(other, 'data', other))
 
+        def __iter__(self):
+            return iter(self.magnitude)
+
         ## Visualization ##
         def __repr__(self):
             return (
@@ -293,11 +296,15 @@ def pint_namespace(xp):
         def manip_fun(x, *args, **kwargs):
             xp_func = getattr(xp, func_str)
 
+            one_array = False
             if func_str not in first_arg_arrays:
                 x = asarray(x)
                 magnitude = xp.asarray(x.magnitude, copy=True)
                 units = x.units
-
+            elif hasattr(x, "__array_namespace__"):
+                magnitude = x
+                units = None
+                one_array = True
             else:
                 x = [asarray(x_i) for x_i in x]
                 if len(x) == 0:
@@ -314,7 +321,7 @@ def pint_namespace(xp):
             ):
                 args[0] = repeats.magnitude
 
-            if func_str in arbitrary_num_arrays:
+            if func_str in arbitrary_num_arrays and not one_array:
                 magnitude = xp_func(*magnitude, *args, **kwargs)
             else:
                 magnitude = xp_func(magnitude, *args, **kwargs)
