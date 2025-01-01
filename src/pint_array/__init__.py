@@ -405,7 +405,6 @@ def pint_namespace(xp):
         "argsort",
         "argmin",
         "argmax",
-        "nonzero",
     ):
 
         def func(x, /, *args, func_str=func_str, **kwargs):
@@ -416,6 +415,14 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, None)
 
         setattr(mod, func_str, func)
+
+    def nonzero(x, /):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        res = xp.nonzero(magnitude)
+        return tuple(ArrayUnitQuantity(magnitude_i, None) for magnitude_i in res)
+
+    mod.nonzero = nonzero
 
     def searchsorted(x1, x2, /, *, side="left", sorter=None):
         if sorter is not None:
