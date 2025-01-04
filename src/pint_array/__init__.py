@@ -14,6 +14,7 @@ import textwrap
 import types
 from typing import Generic
 
+from array_api_compat import size
 from pint import Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
 
@@ -107,6 +108,15 @@ def pint_namespace(xp):
                 f"  '{self.units}'\n)>"
             )
 
+        def __mul__(self, other):
+            if hasattr(other, "units"):
+                magnitude = self._call_super_method("__mul__", other.magnitude)
+                units = self.units * other.units
+            else:
+                magnitude = self._call_super_method("__mul__", other)
+                units = self.units
+            return ArrayUnitQuantity(magnitude, units)
+
         ## Linear Algebra Methods ##
         def __matmul__(self, other):
             return mod.matmul(self, other)
@@ -133,11 +143,11 @@ def pint_namespace(xp):
         def __dlpack_device__(self):
             return self.magnitude.__dlpack_device__()
 
-        def __dlpack__(self, **kwargs):
+        def __dlpack__(self, stream=None, max_version=None, dl_device=None, copy=None):
             # really not sure how to define this
-            return self.magnitude.__dlpack__(**kwargs)
-
-        __dlpack__.__signature__ = inspect.signature(xp.empty(0).__dlpack__)
+            return self.magnitude.__dlpack__(
+                stream=stream, max_version=max_version, dl_device=dl_device, copy=copy
+            )
 
         def to_device(self, device, /, *, stream=None):
             _magnitude = self._magnitude.to_device(device, stream=stream)
@@ -185,7 +195,7 @@ def pint_namespace(xp):
         "__lshift__",
         "__lt__",
         "__mod__",
-        "__mul__",
+        # "__mul__",
         "__ne__",
         "__or__",
         "__pow__",
@@ -301,7 +311,8 @@ def pint_namespace(xp):
                 magnitude = xp.asarray(x.magnitude, copy=True)
                 units = x.units
             elif hasattr(x, "__array_namespace__"):
-                magnitude = x
+                x = asarray(x)
+                magnitude = xp.asarray(x.magnitude, copy=True)
                 units = None
                 one_array = True
             else:
@@ -390,7 +401,9 @@ def pint_namespace(xp):
         if device is None and not copy and dtype == x.dtype:
             return x
         x = asarray(x)
-        magnitude = xp.astype(x.magnitude, dtype, copy=copy, device=device)
+        # https://github.com/data-apis/array-api-compat/issues/226
+        # magnitude = xp.astype(x.magnitude, dtype, copy=copy, device=device)
+        magnitude = xp.astype(x.magnitude, dtype, copy=copy)
         return ArrayUnitQuantity(magnitude, x.units)
 
     mod.astype = astype
@@ -600,7 +613,7 @@ def pint_namespace(xp):
         def fun(x, /, *args, func_str=func_str, **kwargs):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
-            magnitude = getattr(xp, func_str)(x, *args, **kwargs)
+            magnitude = getattr(xp, func_str)(magnitude, *args, **kwargs)
             return ArrayUnitQuantity(magnitude, x.units)
 
         setattr(mod, func_str, fun)
@@ -650,6 +663,20 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, units)
 
         setattr(mod, func_str, fun)
+
+    def multiply(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        units = x1.units * x2.units
+
+        x1_magnitude = xp.asarray(x1.magnitude, copy=True)
+        x2_magnitude = x2.m_as(x1.units)
+
+        magnitude = xp.multiply(x1_magnitude, x2_magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.multiply = multiply
 
     ## Indexing Functions
     def take(x, indices, /, **kwargs):
@@ -791,7 +818,7 @@ def pint_namespace(xp):
     def prod(x, /, *args, axis=None, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        exponent = magnitude.shape[axis] if axis is not None else magnitude.size
+        exponent = magnitude.shape[axis] if axis is not None else size(magnitude)
         units = x.units**exponent
         magnitude = xp.prod(magnitude, *args, axis=axis, **kwargs)
         return ArrayUnitQuantity(magnitude, units)
