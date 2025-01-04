@@ -117,6 +117,13 @@ def pint_namespace(xp):
                 units = self.units
             return ArrayUnitQuantity(magnitude, units)
 
+        def __gt__(self, other):
+            if hasattr(other, "units"):
+                magnitude = self._call_super_method("__gt__", other.magnitude)
+            else:
+                magnitude = self._call_super_method("__gt__", other)
+            return ArrayUnitQuantity(magnitude, None)
+
         ## Linear Algebra Methods ##
         def __matmul__(self, other):
             return mod.matmul(self, other)
@@ -190,7 +197,7 @@ def pint_namespace(xp):
         "__and__",
         "__eq__",
         "__ge__",
-        "__gt__",
+        # "__gt__",
         "__le__",
         "__lshift__",
         "__lt__",
