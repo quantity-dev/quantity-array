@@ -474,10 +474,23 @@ def pint_namespace(xp):
 
     # ignore units of condition, convert x2 to units of x1
     def where(condition, x1, x2, /):
+        if not getattr(condition, "_is_multiplicative", True):
+            raise ValueError(
+                "Invalid units of the condition: Boolean value of Quantity with offset unit is ambiguous."
+            )
+
         condition = asarray(condition)
-        x1 = asarray(x1)
-        x2 = asarray(x2)
+        if hasattr(x1, "units") and hasattr(x2, "units"):
+            x1 = asarray(x1)
+            x2 = asarray(x2)
+        elif hasattr(x1, "units"):
+            x1 = asarray(x1)
+            x2 = asarray(x2, units=x1.units)
+        elif hasattr(x2, "units"):
+            x1 = asarray(x1, units=x2.units)
+            x2 = asarray(x2)
         units = x1.units
+        print(x2.m_as(units))
         magnitude = xp.where(condition.magnitude, x1.magnitude, x2.m_as(units))
         return ArrayUnitQuantity(magnitude, units)
 
