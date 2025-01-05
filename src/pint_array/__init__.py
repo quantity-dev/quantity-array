@@ -15,9 +15,8 @@ import types
 from typing import Generic
 
 from array_api_compat import size
-from pint import Quantity
+from pint import DimensionalityError, OffsetUnitCalculusError, Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
-from pint import DimensionalityError, OffsetUnitCalculusError
 
 __version__ = "0.0.1.dev0"
 __all__ = ["__version__", "pint_namespace"]
@@ -377,13 +376,18 @@ def pint_namespace(xp):
         # Simply need to map input units to onto list of outputs
         input_units = (x.units for x in xi)
         res = xp.meshgrid(*(x.magnitude for x in xi), **kwargs)
-        return [out * unit for out, unit in zip(res, input_units)]
+        return [out * unit for out, unit in zip(res, input_units, strict=False)]
+
     mod.meshgrid = _meshgrid
-    
+
     def _broadcast_arrays(*arrays):
         arrays = [asarray(array) for array in arrays]
         res = xp.broadcast_arrays(*[array.magnitude for array in arrays])
-        return [ArrayUnitQuantity(magnitude, array.units) for magnitude, array in zip(res, arrays)]
+        return [
+            ArrayUnitQuantity(magnitude, array.units)
+            for magnitude, array in zip(res, arrays, strict=False)
+        ]
+
     mod.broadcast_arrays = _broadcast_arrays
 
     ## Data Type Functions and Data Types ##
@@ -720,7 +724,6 @@ def pint_namespace(xp):
 
     mod.multiply = multiply
 
-
     def pow(x1, x2, /, *args, **kwargs):
         x1 = asarray(x1)
         x2 = asarray(x2)
@@ -729,12 +732,12 @@ def pint_namespace(xp):
             raise DimensionalityError(x2.units, "dimensionless")
         if x2.ndim > 0 and not xp.all(x2.magnitude == x2[0].magnitude):
             raise DimensionalityError(
-                        x2.units,
-                        "dimensionless",
-                        extra_msg="The exponent must be a scalar or an array of all the same value.",
-                    )
+                x2.units,
+                "dimensionless",
+                extra_msg="The exponent must be a scalar or an array of all the same value.",
+            )
 
-        units = x1.units ** x2.magnitude
+        units = x1.units**x2.magnitude
 
         magnitude = xp.pow(x1.magnitude, x2.magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, units)
