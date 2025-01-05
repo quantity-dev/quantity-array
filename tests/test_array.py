@@ -19,10 +19,14 @@ from pint import UnitRegistry
 ureg = UnitRegistry()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 # @helpers.requires_numpy
 >>>>>>> 1ad9ca9 (style: pre-commit fixes)
+=======
+
+>>>>>>> 8498256 (style: pre-commit fixes)
 class TestNumpyMethods:
     @classmethod
     def setup_class(cls):
@@ -70,17 +74,14 @@ class TestNumpyArrayCreation(TestNumpyMethods):
     def test_ones_like(self):
         self.assertNDArrayEqual(pnp.ones_like(self.q), np.array([[1, 1], [1, 1]]))
 
-    
     def test_zeros_like(self):
         self.assertNDArrayEqual(pnp.zeros_like(self.q), np.array([[0, 0], [0, 0]]))
 
-    
     def test_empty_like(self):
         ret = pnp.empty_like(self.q)
         assert ret.shape == (2, 2)
         assert isinstance(ret.magnitude, np.ndarray)
 
-    
     @pytest.mark.xfail(reason="Scalar arguement issue ")
     def test_full_like(self):
         helpers.assert_quantity_equal(
@@ -113,19 +114,16 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
 
     # Transpose-like operations
 
-    
     def test_moveaxis(self):
         helpers.assert_quantity_equal(
             pnp.moveaxis(self.q, 1, 0), np.array([[1, 2], [3, 4]]).T * self.ureg.m
         )
 
-    
     def test_transpose(self):
         helpers.assert_quantity_equal(
             pnp.matrix_transpose(self.q), [[1, 3], [2, 4]] * self.ureg.m
         )
 
-    
     def test_flip_numpy_func(self):
         helpers.assert_quantity_equal(
             pnp.flip(self.q, axis=0), [[3, 4], [1, 2]] * self.ureg.m
@@ -133,20 +131,17 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
 
     # Changing number of dimensions
 
-    
     def test_broadcast_to(self):
         helpers.assert_quantity_equal(
             pnp.broadcast_to(self.q[:, 1], (2, 2)),
             np.array([[2, 4], [2, 4]]) * self.ureg.m,
         )
 
-    
     def test_expand_dims(self):
         helpers.assert_quantity_equal(
             pnp.expand_dims(self.q, 0), np.array([[[1, 2], [3, 4]]]) * self.ureg.m
         )
 
-    
     def test_squeeze(self):
         helpers.assert_quantity_equal(pnp.squeeze(self.q), self.q)
         helpers.assert_quantity_equal(
@@ -155,7 +150,7 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
 
     # Changing number of dimensions
     # Joining arrays
-    
+
     def test_concat_stack(self, subtests):
         for func in (pnp.concat, pnp.stack):
             with subtests.test(func=func):
@@ -208,7 +203,6 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
 class TestNumpyMathematicalFunctions(TestNumpyMethods):
     # https://www.numpy.org/devdocs/reference/routines.math.html
 
-    
     def test_prod_numpy_func(self):
         axis = 0
         where = [[True, False], [True, True]]
@@ -231,7 +225,6 @@ class TestNumpyMathematicalFunctions(TestNumpyMethods):
             pnp.prod(self.q, axis=axis, where=[True, False]), [3, 1] * self.ureg.m**2
         )
 
-    
     def test_sum_numpy_func(self):
         helpers.assert_quantity_equal(pnp.sum(self.q, axis=0), [4, 6] * self.ureg.m)
         with pytest.raises(OffsetUnitCalculusError):
@@ -311,34 +304,28 @@ class TestNumpyUnclassified(TestNumpyMethods):
             pnp.repeat(self.q, 2), [1, 1, 2, 2, 3, 3, 4, 4] * self.ureg.m
         )
 
-    
     def test_sort_numpy_func(self):
         q = [4, 5, 2, 3, 1, 6] * self.ureg.m
         helpers.assert_quantity_equal(pnp.sort(q), [1, 2, 3, 4, 5, 6] * self.ureg.m)
 
-    
     def test_argsort_numpy_func(self):
         self.assertNDArrayEqual(pnp.argsort(self.q, axis=0), np.array([[0, 0], [1, 1]]))
 
-    
     def test_searchsorted_numpy_func(self):
         """Test searchsorted as numpy function."""
         q = self.q.flatten()
         self.assertNDArrayEqual(pnp.searchsorted(q, [1.5, 2.5] * self.ureg.m), [1, 2])
 
-    
     def test_nonzero_numpy_func(self):
         q = [1, 0, 5, 6, 0, 9] * self.ureg.m
         self.assertNDArrayEqual(pnp.nonzero(q)[0], [0, 2, 3, 5])
 
-    
     def test_any_numpy_func(self):
         q = [0, 1] * self.ureg.m
         assert pnp.any(q)
         with pytest.raises(ValueError):
             pnp.any(self.q_temperature)
 
-    
     def test_all_numpy_func(self):
         q = [0, 1] * self.ureg.m
         assert not pnp.all(q)
@@ -348,18 +335,15 @@ class TestNumpyUnclassified(TestNumpyMethods):
     def test_max_numpy_func(self):
         assert pnp.max(self.q) == 4 * self.ureg.m
 
-    
     def test_max_with_axis_arg(self):
         helpers.assert_quantity_equal(pnp.max(self.q, axis=1), [2, 4] * self.ureg.m)
 
-    
     def test_max_with_initial_arg(self):
         helpers.assert_quantity_equal(
             pnp.max(self.q[..., None], axis=2, initial=3 * self.ureg.m),
             [[3, 3], [3, 4]] * self.ureg.m,
         )
 
-    
     def test_argmax_numpy_func(self):
         self.assertNDArrayEqual(pnp.argmax(self.q, axis=0), np.array([1, 1]))
 
@@ -368,22 +352,18 @@ class TestNumpyUnclassified(TestNumpyMethods):
             pnp.maximum(self.q, self.Q_([0, 5], "m")), self.Q_([[1, 5], [3, 5]], "m")
         )
 
-    
     def test_min_numpy_func(self):
         assert pnp.min(self.q) == 1 * self.ureg.m
 
-    
     def test_min_with_axis_arg(self):
         helpers.assert_quantity_equal(pnp.min(self.q, axis=1), [1, 3] * self.ureg.m)
 
-    
     def test_min_with_initial_arg(self):
         helpers.assert_quantity_equal(
             pnp.min(self.q[..., None], axis=2, initial=3 * self.ureg.m),
             [[1, 2], [3, 3]] * self.ureg.m,
         )
 
-    
     def test_argmin_numpy_func(self):
         self.assertNDArrayEqual(pnp.argmin(self.q, axis=0), np.array([0, 0]))
 
@@ -392,35 +372,29 @@ class TestNumpyUnclassified(TestNumpyMethods):
             pnp.minimum(self.q, self.Q_([0, 5], "m")), self.Q_([[0, 2], [0, 4]], "m")
         )
 
-    
     def test_clip_numpy_func(self):
         helpers.assert_quantity_equal(
             pnp.clip(self.q, 150 * self.ureg.cm, None), [[1.5, 2], [3, 4]] * self.ureg.m
         )
 
-    
     def test_round_numpy_func(self):
         helpers.assert_quantity_equal(
             pnp.round(1.0275 * self.ureg.m, decimals=2), 1.03 * self.ureg.m
         )
 
-    
     def test_cumulative_sum(self):
         helpers.assert_quantity_equal(
             pnp.cumulative_sum(self.q, axis=0), [[1, 2], [4, 6]] * self.ureg.m
         )
 
-    
     def test_mean_numpy_func(self):
         assert pnp.mean(self.q) == 2.5 * self.ureg.m
         assert pnp.mean(self.q_temperature) == self.Q_(2.5, self.ureg.degC)
 
-    
     def test_var_numpy_func(self):
         assert pnp.var(self.q) == 1.25 * self.ureg.m**2
         assert pnp.var(self.q_temperature) == 1.25 * self.ureg.delta_degC**2
 
-    
     def test_std_numpy_func(self):
         helpers.assert_quantity_almost_equal(
             pnp.std(self.q), 1.11803 * self.ureg.m, rtol=1e-5
@@ -525,15 +499,12 @@ class TestNumpyUnclassified(TestNumpyMethods):
 
         assert u.dtype == "uint32"
 
-    
     def test_shape_numpy_func(self):
         assert pnp.asarray(self.q).shape == (2, 2)
 
-    
     def test_ndim_numpy_func(self):
         assert pnp.asarray(self.q).ndim == 2
 
-    
     def test_meshgrid_numpy_func(self):
         x = [1, 2] * self.ureg.m
         y = [0, 50, 100] * self.ureg.mm
@@ -549,7 +520,6 @@ class TestNumpyUnclassified(TestNumpyMethods):
             self.q < 2 * self.ureg.m, np.array([[True, False], [False, False]])
         )
 
-    
     def test_where(self):
         helpers.assert_quantity_equal(
             pnp.where(self.q >= 2 * self.ureg.m, self.q, 20 * self.ureg.m),
@@ -598,7 +568,6 @@ class TestNumpyUnclassified(TestNumpyMethods):
                 self.ureg.Quantity([-1, 0, 1], "degC"), [1, 2, 1] * self.ureg.s, pnp.nan
             )
 
-    
     def test_tile(self):
         helpers.assert_quantity_equal(
             pnp.tile(self.q, 2), np.array([[1, 2, 1, 2], [3, 4, 3, 4]]) * self.ureg.m
