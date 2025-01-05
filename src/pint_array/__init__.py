@@ -339,7 +339,7 @@ def pint_namespace(xp):
                 args[0] = repeats.magnitude
 
             if func_str in arbitrary_num_arrays and not one_array:
-                args = [asarray(arg, units = x[0].units).magnitude for arg in args]
+                args = [asarray(arg, units=x[0].units).magnitude for arg in args]
                 magnitude = xp_func(*magnitude, *args, **kwargs)
             else:
                 magnitude = xp_func(magnitude, *args, **kwargs)

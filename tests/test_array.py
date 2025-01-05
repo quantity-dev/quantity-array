@@ -182,10 +182,9 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
         x = self.Q_(np.array([[1, 2, 3]]), "m")
         y = self.Q_(np.array([[4], [5]]), "nm")
         result = pnp.broadcast_arrays(x, y)
-        expected = (self.Q_(np.array([[1, 2, 3],
-                         [1, 2, 3]]),"m"),
-                    self.Q_(np.array([[4, 4, 4],
-                         [5, 5, 5]]),"nm")
+        expected = (
+            self.Q_(np.array([[1, 2, 3], [1, 2, 3]]), "m"),
+            self.Q_(np.array([[4, 4, 4], [5, 5, 5]]), "nm"),
         )
         helpers.assert_quantity_equal(result[0], expected[0])
         helpers.assert_quantity_equal(result[1], expected[1])
