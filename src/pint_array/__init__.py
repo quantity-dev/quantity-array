@@ -17,6 +17,7 @@ from typing import Generic
 from array_api_compat import size
 from pint import Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
+from pint import DimensionalityError, OffsetUnitCalculusError
 
 __version__ = "0.0.1.dev0"
 __all__ = ["__version__", "pint_namespace"]
@@ -352,7 +353,7 @@ def pint_namespace(xp):
 
         return manip_fun
 
-    creation_manip_functions = ["tril", "triu", "meshgrid"]
+    creation_manip_functions = ["tril", "triu"]
     manip_names = [
         "broadcast_arrays",
         "broadcast_to",
@@ -371,6 +372,19 @@ def pint_namespace(xp):
     ]
     for name in manip_names + creation_manip_functions:
         setattr(mod, name, get_manip_fun(name))
+
+    def _meshgrid(*xi, **kwargs):
+        # Simply need to map input units to onto list of outputs
+        input_units = (x.units for x in xi)
+        res = xp.meshgrid(*(x.magnitude for x in xi), **kwargs)
+        return [out * unit for out, unit in zip(res, input_units)]
+    mod.meshgrid = _meshgrid
+    
+    def _broadcast_arrays(*arrays):
+        arrays = [asarray(array) for array in arrays]
+        res = xp.broadcast_arrays(*[array.magnitude for array in arrays])
+        return [ArrayUnitQuantity(magnitude, array.units) for magnitude, array in zip(res, arrays)]
+    mod.broadcast_arrays = _broadcast_arrays
 
     ## Data Type Functions and Data Types ##
     dtype_fun_names = ["can_cast", "finfo", "iinfo", "result_type"]
@@ -671,9 +685,7 @@ def pint_namespace(xp):
         "logical_xor",
         "maximum",
         "minimum",
-        "multiply",
         "not_equal",
-        "pow",
         "remainder",
         "subtract",
     ]
@@ -707,6 +719,27 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
 
     mod.multiply = multiply
+
+
+    def pow(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        if not x2.units.dimensionless:
+            raise DimensionalityError(x2.units, "dimensionless")
+        if x2.ndim > 0 and not xp.all(x2.magnitude == x2[0].magnitude):
+            raise DimensionalityError(
+                        x2.units,
+                        "dimensionless",
+                        extra_msg="The exponent must be a scalar or an array of all the same value.",
+                    )
+
+        units = x1.units ** x2.magnitude
+
+        magnitude = xp.pow(x1.magnitude, x2.magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.pow = pow
 
     ## Indexing Functions
     def take(x, indices, /, **kwargs):
