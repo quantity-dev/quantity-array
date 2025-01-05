@@ -40,6 +40,7 @@ ipython = "ipython"
 
 [tool.pixi.feature.tests.dependencies]
 pytest = "*"
+pytest-subtests = "*"
 
 [tool.pixi.feature.tests.tasks]
 tests = "pytest"
