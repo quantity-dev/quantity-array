@@ -623,17 +623,16 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, x.units)
 
         setattr(mod, func_str, fun)
-    
+
     for func_str in ["sqrt"]:
 
         def fun(x, /, *args, func_str=func_str, **kwargs):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
             magnitude = getattr(xp, func_str)(magnitude, *args, **kwargs)
-            return ArrayUnitQuantity(magnitude, x.units ** 0.5)
+            return ArrayUnitQuantity(magnitude, x.units**0.5)
 
         setattr(mod, func_str, fun)
-
 
     elementwise_two_arrays = [
         "add",

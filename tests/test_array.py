@@ -3,19 +3,19 @@ from __future__ import annotations
 import copy
 import operator as op
 import pickle
-import warnings
 
+import numpy as np
 import pytest
+from pint import DimensionalityError, OffsetUnitCalculusError
 
-from pint import DimensionalityError, OffsetUnitCalculusError, UnitStrippedWarning
 # from pint.compat import np
 from pint.testsuite import helpers
-from pint.testsuite.test_umath import TestUFuncs
 
-import pint_array; 
-import numpy as np; 
-pnp = pint_array.pint_namespace(np); 
-from pint import UnitRegistry; 
+import pint_array
+
+pnp = pint_array.pint_namespace(np)
+from pint import UnitRegistry
+
 ureg = UnitRegistry()
 
 class TestNumpyMethods:
@@ -98,7 +98,7 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
         helpers.assert_quantity_equal(self.q.flatten(), [1, 2, 3, 4] * self.ureg.m)
 
     def test_flat(self):
-        for q, v in zip(self.q.flat, [1, 2, 3, 4]):
+        for q, v in zip(self.q.flat, [1, 2, 3, 4], strict=False):
             assert q == v * self.ureg.m
 
     def test_reshape(self):
@@ -212,7 +212,9 @@ class TestNumpyMathematicalFunctions(TestNumpyMethods):
         helpers.assert_quantity_equal(
             pnp.prod(self.q, axis=axis), [3, 8] * self.ureg.m**2
         )
-        helpers.assert_quantity_equal(pnp.prod(self.q, where=where), 12 * self.ureg.m**3)
+        helpers.assert_quantity_equal(
+            pnp.prod(self.q, where=where), 12 * self.ureg.m**3
+        )
 
         with pytest.raises(DimensionalityError):
             pnp.prod(self.q, axis=axis, where=where)
@@ -299,7 +301,6 @@ class TestNumpyMathematicalFunctions(TestNumpyMethods):
 
 
 class TestNumpyUnclassified(TestNumpyMethods):
-
     def test_repeat(self):
         helpers.assert_quantity_equal(
             pnp.repeat(self.q, 2), [1, 1, 2, 2, 3, 3, 4, 4] * self.ureg.m
@@ -513,7 +514,7 @@ class TestNumpyUnclassified(TestNumpyMethods):
         self.assertNDArrayEqual(v == w, false)
         self.assertNDArrayEqual(v == w.to("mm"), false)
         self.assertNDArrayEqual(u == v, false)
-    
+
     def test_dtype(self):
         u = self.Q_(pnp.arange(12, dtype="uint32"))
 
