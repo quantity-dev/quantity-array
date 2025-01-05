@@ -720,6 +720,7 @@ def pint_namespace(xp):
         setattr(mod, name, get_linalg_fun(name))
 
     def matrix_transpose(x):
+        x = asarray(x)
         return x.mT
 
     mod.matrix_transpose = matrix_transpose
