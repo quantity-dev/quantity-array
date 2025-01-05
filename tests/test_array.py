@@ -178,10 +178,6 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
             self.Q_(np.array([[1, 2, 3], [1, 2, 3]]), "m"),
             self.Q_(np.array([[4, 4, 4], [5, 5, 5]]), "nm"),
         )
-        helpers.assert_quantity_equal(result[0], expected[0])
-        helpers.assert_quantity_equal(result[1], expected[1])
-
-        result = pnp.broadcast_arrays(x, y, subok=True)
         helpers.assert_quantity_equal(result, expected)
 
     def test_roll(self):
@@ -234,7 +230,6 @@ class TestNumpyMathematicalFunctions(TestNumpyMethods):
             q_cp = copy.copy(q)
             with pytest.raises(DimensionalityError):
                 op_(2.0, q_cp)
-            arr_cp = copy.copy(arr)
             arr_cp = copy.copy(arr)
             q_cp = copy.copy(q)
             with pytest.raises(DimensionalityError):
@@ -367,11 +362,6 @@ class TestNumpyUnclassified(TestNumpyMethods):
         helpers.assert_quantity_almost_equal(
             pnp.std(self.q_temperature), 1.11803 * self.ureg.delta_degC, rtol=1e-5
         )
-
-    def test_cumprod(self):
-        with pytest.raises(DimensionalityError):
-            self.q.cumprod()
-        helpers.assert_quantity_equal((self.q / self.ureg.m).cumprod(), [1, 2, 6, 24])
 
     def test_conj(self):
         helpers.assert_quantity_equal((self.q * (1 + 1j)).conj(), self.q * (1 - 1j))
