@@ -15,7 +15,7 @@ import types
 from typing import Generic
 
 from array_api_compat import size
-from pint import DimensionalityError, OffsetUnitCalculusError, Quantity
+from pint import DimensionalityError, Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
 
 __version__ = "0.0.1.dev0"
@@ -493,9 +493,11 @@ def pint_namespace(xp):
     # ignore units of condition, convert x2 to units of x1
     def where(condition, x1, x2, /):
         if not getattr(condition, "_is_multiplicative", True):
-            raise ValueError(
-                "Invalid units of the condition: Boolean value of Quantity with offset unit is ambiguous."
+            msg = (
+                "Invalid units of the condition: "
+                "Boolean value of Quantity with offset unit is ambiguous."
             )
+            raise ValueError(msg)
 
         condition = asarray(condition)
         if hasattr(x1, "units") and hasattr(x2, "units"):
@@ -508,7 +510,6 @@ def pint_namespace(xp):
             x1 = asarray(x1, units=x2.units)
             x2 = asarray(x2)
         units = x1.units
-        print(x2.m_as(units))
         magnitude = xp.where(condition.magnitude, x1.magnitude, x2.m_as(units))
         return ArrayUnitQuantity(magnitude, units)
 
@@ -730,16 +731,32 @@ def pint_namespace(xp):
 
         if not x2.units.dimensionless:
             raise DimensionalityError(x2.units, "dimensionless")
-        if x2.ndim > 0 and not xp.all(x2.magnitude == x2[0].magnitude):
-            raise DimensionalityError(
-                x2.units,
-                "dimensionless",
-                extra_msg="The exponent must be a scalar or an array of all the same value.",
-            )
+        x2_magnitude = x2.magnitude
+        x2_magnitude_dtype = x2_magnitude.dtype
+        if xp.isdtype(x2_magnitude_dtype, "complex floating"):
+            as_scalar = complex
+        elif xp.isdtype(x2_magnitude_dtype, "real floating"):
+            as_scalar = float
+        elif xp.isdtype(x2_magnitude_dtype, "integral"):
+            as_scalar = int
+        else:
+            as_scalar = bool
+        if x2.ndim == 0:
+            units = x1.units ** as_scalar(x2_magnitude)
+        else:
+            x2_first_elem_magnitude = x2[(0,) * x2.ndim]
+            if not xp.all(x2_magnitude == x2_first_elem_magnitude):
+                extra_msg = (
+                    "The exponent must be a scalar or an array of all the same value."
+                )
+                raise DimensionalityError(
+                    x2.units,
+                    "dimensionless",
+                    extra_msg=extra_msg,
+                )
+            units = x1.units ** as_scalar(x2_first_elem_magnitude)
 
-        units = x1.units**x2.magnitude
-
-        magnitude = xp.pow(x1.magnitude, x2.magnitude, *args, **kwargs)
+        magnitude = xp.pow(x1.magnitude, x2_magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, units)
 
     mod.pow = pow

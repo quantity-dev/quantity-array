@@ -2013,7 +2013,7 @@ packages:
 - pypi: .
   name: pint-array
   version: 0.0.1.dev0
-  sha256: 24493191fd5707853309652b03e9a153a4d9ace5f7f1b9c9ccb73d824f68d514
+  sha256: 4a89db66462f8ea5ad75b3a9e4b4b623805532b36abed68b124c6e67a3022bfe
   requires_python: '>=3.10'
   editable: true
 - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.3.6-pyhd8ed1ab_1.conda

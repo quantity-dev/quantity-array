@@ -6,28 +6,28 @@ import pickle
 
 import numpy as np
 import pytest
-from pint import DimensionalityError, OffsetUnitCalculusError
-
-# from pint.compat import np
+from pint import DimensionalityError, OffsetUnitCalculusError, UnitRegistry
 from pint.testsuite import helpers
 
 import pint_array
 
 pnp = pint_array.pint_namespace(np)
-from pint import UnitRegistry
-
 ureg = UnitRegistry()
 
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 # @helpers.requires_numpy
 >>>>>>> 1ad9ca9 (style: pre-commit fixes)
 =======
 
 >>>>>>> 8498256 (style: pre-commit fixes)
 class TestNumpyMethods:
+=======
+class TestNumPyMethods:
+>>>>>>> 573558d (fix xp-tests)
     @classmethod
     def setup_class(cls):
         from pint import _DEFAULT_REGISTRY
@@ -67,10 +67,10 @@ class TestNumpyMethods:
         assert not isinstance(desired, self.Q_)
 
 
-class TestNumpyArrayCreation(TestNumpyMethods):
+class TestNumPyArrayCreation(TestNumPyMethods):
     # https://docs.scipy.org/doc/numpy/reference/routines.array-creation.html
 
-    @pytest.mark.xfail(reason="Scalar arguement issue ")
+    @pytest.mark.xfail(reason="Scalar argument issue ")
     def test_ones_like(self):
         self.assertNDArrayEqual(pnp.ones_like(self.q), np.array([[1, 1], [1, 1]]))
 
@@ -82,7 +82,7 @@ class TestNumpyArrayCreation(TestNumpyMethods):
         assert ret.shape == (2, 2)
         assert isinstance(ret.magnitude, np.ndarray)
 
-    @pytest.mark.xfail(reason="Scalar arguement issue ")
+    @pytest.mark.xfail(reason="Scalar argument issue ")
     def test_full_like(self):
         helpers.assert_quantity_equal(
             pnp.full_like(self.q, self.Q_(0, self.ureg.degC)),
@@ -91,13 +91,7 @@ class TestNumpyArrayCreation(TestNumpyMethods):
         self.assertNDArrayEqual(pnp.full_like(self.q, 2), np.array([[2, 2], [2, 2]]))
 
 
-class TestNumpyArrayManipulation(TestNumpyMethods):
-    # TODO
-    # https://www.numpy.org/devdocs/reference/routines.array-manipulation.html
-    # copyto
-    # broadcast
-    # asarray	asanyarray	asmatrix	asfarray	asfortranarray	ascontiguousarray	asarray_chkfinite	asscalar	require
-
+class TestNumPyArrayManipulation(TestNumPyMethods):
     # Changing array shape
 
     def test_flatten(self):
@@ -194,12 +188,11 @@ class TestNumpyArrayManipulation(TestNumpyMethods):
         )
 
 
-class TestNumpyMathematicalFunctions(TestNumpyMethods):
+class TestNumPyMathematicalFunctions(TestNumPyMethods):
     # https://www.numpy.org/devdocs/reference/routines.math.html
 
     def test_prod_numpy_func(self):
         axis = 0
-        where = [[True, False], [True, True]]
 
         helpers.assert_quantity_equal(pnp.prod(self.q), 24 * self.ureg.m**4)
         helpers.assert_quantity_equal(
@@ -278,7 +271,7 @@ class TestNumpyMathematicalFunctions(TestNumpyMethods):
             op.ipow(arr_cp, q_cp)
 
 
-class TestNumpyUnclassified(TestNumpyMethods):
+class TestNumPyUnclassified(TestNumPyMethods):
     def test_repeat(self):
         helpers.assert_quantity_equal(
             pnp.repeat(self.q, 2), [1, 1, 2, 2, 3, 3, 4, 4] * self.ureg.m
@@ -303,13 +296,13 @@ class TestNumpyUnclassified(TestNumpyMethods):
     def test_any_numpy_func(self):
         q = [0, 1] * self.ureg.m
         assert pnp.any(q)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="offset unit is ambiguous"):
             pnp.any(self.q_temperature)
 
     def test_all_numpy_func(self):
         q = [0, 1] * self.ureg.m
         assert not pnp.all(q)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="offset unit is ambiguous"):
             pnp.all(self.q_temperature)
 
     def test_max_numpy_func(self):
@@ -438,11 +431,10 @@ class TestNumpyUnclassified(TestNumpyMethods):
     def test_equal(self):
         x = self.q.magnitude
         u = self.Q_(pnp.ones(x.shape))
-        true = pnp.ones_like(x, dtype=np.bool_)
         false = pnp.zeros_like(x, dtype=np.bool_)
 
         helpers.assert_quantity_equal(u, u)
-        helpers.assert_quantity_equal(u == u, u.magnitude == u.magnitude)
+        helpers.assert_quantity_equal(u, u.magnitude)
         helpers.assert_quantity_equal(u == 1, u.magnitude == 1)
 
         v = self.Q_(pnp.zeros(x.shape), "m")
@@ -452,7 +444,6 @@ class TestNumpyUnclassified(TestNumpyMethods):
             self.Q_(pnp.zeros_like(x), "m") == self.Q_(pnp.zeros_like(x), "s"),
             false,
         )
-        self.assertNDArrayEqual(v == v, true)
         self.assertNDArrayEqual(v == w, false)
         self.assertNDArrayEqual(v == w.to("mm"), false)
         self.assertNDArrayEqual(u == v, false)
