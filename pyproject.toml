@@ -43,7 +43,7 @@ pytest = "*"
 pytest-subtests = "*"
 
 [tool.pixi.feature.tests.tasks]
-tests = "pytest"
+tests = "pytest tests"
 
 [tool.pixi.feature.xp-tests.dependencies]
 pytest = "*"
