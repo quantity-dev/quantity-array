@@ -6,13 +6,12 @@ import operator as op
 import array_api_strict as xp
 import numpy as np
 import pytest
-from pint import DimensionalityError, OffsetUnitCalculusError, UnitRegistry
+from pint import DimensionalityError, OffsetUnitCalculusError
 from pint.testsuite import helpers
 
 import pint_array
 
 pxp = pint_array.pint_namespace(xp)
-ureg = UnitRegistry()
 
 
 class TestNumPyMethods:
@@ -21,7 +20,7 @@ class TestNumPyMethods:
         from pint import _DEFAULT_REGISTRY
 
         cls.ureg = _DEFAULT_REGISTRY
-        cls.Q_ = cls.ureg.Quantity
+        cls.Q_ = pxp.ArrayUnitQuantity
 
     @classmethod
     def teardown_class(cls):
@@ -30,23 +29,23 @@ class TestNumPyMethods:
 
     @property
     def q(self):
-        return [[1, 2], [3, 4]] * self.ureg.m
+        return pxp.asarray([[1, 2], [3, 4]], units=self.ureg.m)
 
     @property
     def q_scalar(self):
-        return pxp.asarray(5) * self.ureg.m
+        return pxp.asarray(5, units=self.ureg.m)
 
     @property
     def q_nan(self):
-        return [[1, 2], [3, pxp.nan]] * self.ureg.m
+        return pxp.asarray([[1, 2], [3, pxp.nan]], units=self.ureg.m)
 
     @property
     def q_zero_or_nan(self):
-        return [[0, 0], [0, pxp.nan]] * self.ureg.m
+        return pxp.asarray([[0, 0], [0, pxp.nan]], units=self.ureg.m)
 
     @property
     def q_temperature(self):
-        return self.Q_([[1, 2], [3, 4]], self.ureg.degC)
+        return pxp.asarray([[1, 2], [3, 4]], self.ureg.degC)
 
     def assertNDArrayEqual(self, actual, desired):
         # Assert that the given arrays are equal, and are not Quantities
@@ -103,12 +102,12 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
 
     def test_transpose(self):
         helpers.assert_quantity_equal(
-            pxp.matrix_transpose(self.q), [[1, 3], [2, 4]] * self.ureg.m
+            pxp.matrix_transpose(self.q), pxp.asarray([[1, 3], [2, 4]]) * self.ureg.m
         )
 
     def test_flip_numpy_func(self):
         helpers.assert_quantity_equal(
-            pxp.flip(self.q, axis=0), [[3, 4], [1, 2]] * self.ureg.m
+            pxp.flip(self.q, axis=0), pxp.asarray([[3, 4], [1, 2]]) * self.ureg.m
         )
 
     # Changing number of dimensions
@@ -127,7 +126,7 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
     def test_squeeze(self):
         helpers.assert_quantity_equal(pxp.squeeze(self.q), self.q)
         helpers.assert_quantity_equal(
-            pxp.squeeze(self.q.reshape([1, 4])), [1, 2, 3, 4] * self.ureg.m
+            pxp.squeeze(self.q.reshape([1, 4])), pxp.asarray([1, 2, 3, 4]) * self.ureg.m
         )
 
     # Changing number of dimensions

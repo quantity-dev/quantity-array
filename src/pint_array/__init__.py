@@ -946,4 +946,6 @@ def pint_namespace(xp):
             with contextlib.suppress(AttributeError, TypeError):
                 mod_attr.__name__ = xp_attr.__name__
 
+    mod.ArrayUnitQuantity = ArrayUnitQuantity
+
     return mod
