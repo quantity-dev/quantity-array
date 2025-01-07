@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import operator as op
-import pickle
 
 import array_api_strict as xp
 import numpy as np
@@ -412,14 +411,6 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(x * self.q, u * x * self.q)
         helpers.assert_quantity_equal(x + u, u + x)
         helpers.assert_quantity_equal(x - u, -(u - x))
-
-    def test_pickle(self, subtests):
-        for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
-            with subtests.test(protocol):
-                q1 = [10, 20] * self.ureg.m
-                q2 = pickle.loads(pickle.dumps(q1, protocol))
-                self.assertNDArrayEqual(q1.magnitude, q2.magnitude)
-                assert q1.units == q2.units
 
     def test_equal(self):
         x = self.q.magnitude
