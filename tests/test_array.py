@@ -13,25 +13,7 @@ import pint_array
 
 pxp = pint_array.pint_namespace(xp)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
-# @helpers.requires_numpy
->>>>>>> 1ad9ca9 (style: pre-commit fixes)
-=======
-
->>>>>>> 8498256 (style: pre-commit fixes)
-class TestNumpyMethods:
-=======
 class TestNumPyMethods:
->>>>>>> 573558d (fix xp-tests)
-=======
-
-class TestNumPyMethods:
->>>>>>> bda9eba697f92e4bfe41a3f3813e589da7048eba
     @classmethod
     def setup_class(cls):
         from pint import _DEFAULT_REGISTRY
