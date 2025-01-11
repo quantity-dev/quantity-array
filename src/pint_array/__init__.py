@@ -115,6 +115,8 @@ def pint_namespace(xp):
             else:
                 magnitude = self._call_super_method("__mul__", other)
                 units = self.units
+            if magnitude is NotImplemented:
+                return NotImplemented
             return ArrayUnitQuantity(magnitude, units)
 
         def __gt__(self, other):
