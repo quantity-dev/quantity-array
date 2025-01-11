@@ -119,13 +119,6 @@ def pint_namespace(xp):
                 return NotImplemented
             return ArrayUnitQuantity(magnitude, units)
 
-        def __gt__(self, other):
-            if hasattr(other, "units"):
-                magnitude = self._call_super_method("__gt__", other.magnitude)
-            else:
-                magnitude = self._call_super_method("__gt__", other)
-            return ArrayUnitQuantity(magnitude, None)
-
         ## Linear Algebra Methods ##
         def __matmul__(self, other):
             return mod.matmul(self, other)
@@ -197,21 +190,10 @@ def pint_namespace(xp):
         "__add__",
         "__sub__",
         "__and__",
-        "__eq__",
-        "__ge__",
-        # "__gt__",
-        "__le__",
-        "__lshift__",
-        "__lt__",
         "__mod__",
         # "__mul__",
-        "__ne__",
-        "__or__",
-        "__pow__",
-        "__rshift__",
-        "__sub__",
+        # "__pow__",
         "__truediv__",
-        "__xor__",
         "__divmod__",
         "__floordiv__",
     ]
@@ -221,12 +203,10 @@ def pint_namespace(xp):
         "__rand__",
         "__rdivmod__",
         "__rfloordiv__",
-        "__rlshift__",
         "__rmod__",
         "__rmul__",
         "__ror__",
-        "__rpow__",
-        "__rrshift__",
+        # "__rpow__",
         "__rsub__",
         "__rtruediv__",
         "__rxor__",
@@ -239,6 +219,47 @@ def pint_namespace(xp):
             magnitude = self._call_super_method(name, magnitude_other)
             # FIXME: correct units for op
             return ArrayUnitQuantity(magnitude, units)
+
+        setattr(ArrayQuantity, name, method)
+
+
+    # Methods that return the result of an elementwise binary operation
+    unitless_binary_names = [
+        "__eq__",
+        "__ge__",
+        "__gt__",
+        "__le__",
+        "__lt__",
+        "__ne__",
+        "__or__",
+        "__truediv__",
+        "__xor__",
+        "__divmod__",
+        "__floordiv__",
+    ]
+    # Methods that return the result of an elementwise binary operation (reflected)
+    unitless_rbinary_names = [
+        "__radd__",
+        "__rand__",
+        "__rdivmod__",
+        "__rfloordiv__",
+        "__rmod__",
+        "__rmul__",
+        "__ror__",
+        "__rpow__",
+        "__rrshift__",
+        "__rsub__",
+        "__rtruediv__",
+        "__rxor__",
+    ]
+    for name in unitless_binary_names + unitless_rbinary_names:
+
+        def method(self, other, name=name):
+            units = self.units
+            magnitude_other = other.m_as(units) if hasattr(other, "units") else other
+            magnitude = self._call_super_method(name, magnitude_other)
+            # FIXME: correct units for op
+            return magnitude
 
         setattr(ArrayQuantity, name, method)
 
@@ -456,7 +477,8 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, func)
 
-    # Functions which ignore units on input and output
+    # Functions which ignore units on input and output, and return a bool/int
+    # as a non-Quantity array
     for func_str in (
         "argsort",
         "argmin",
@@ -468,7 +490,7 @@ def pint_namespace(xp):
             magnitude = xp.asarray(x.magnitude, copy=True)
             xp_func = getattr(xp, func_str)
             magnitude = xp_func(magnitude, *args, **kwargs)
-            return ArrayUnitQuantity(magnitude, None)
+            return magnitude
 
         setattr(mod, func_str, func)
 
