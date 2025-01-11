@@ -15,6 +15,7 @@ pxp = pint_array.pint_namespace(xp)
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 <<<<<<< HEAD
@@ -27,6 +28,10 @@ class TestNumpyMethods:
 =======
 class TestNumPyMethods:
 >>>>>>> 573558d (fix xp-tests)
+=======
+
+class TestNumPyMethods:
+>>>>>>> bda9eba697f92e4bfe41a3f3813e589da7048eba
     @classmethod
     def setup_class(cls):
         from pint import _DEFAULT_REGISTRY
@@ -308,7 +313,11 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(pxp.max(self.q, axis=1), [2, 4] * self.ureg.m)
 
     def test_argmax_numpy_func(self):
+<<<<<<< HEAD
         self.assertNDArrayEqual(pxp.argmax(self.q, axis=0), xp.asarray([1, 1]))
+=======
+        self.assertNDArrayEqual(pxp.argmax(self.q, axis=0), pxp.asarray([1, 1]))
+>>>>>>> bda9eba697f92e4bfe41a3f3813e589da7048eba
 
     def test_maximum(self):
         helpers.assert_quantity_equal(
@@ -322,7 +331,11 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(pxp.min(self.q, axis=1), [1, 3] * self.ureg.m)
 
     def test_argmin_numpy_func(self):
+<<<<<<< HEAD
         self.assertNDArrayEqual(pxp.argmin(self.q, axis=0), xp.asarray([0, 0]))
+=======
+        self.assertNDArrayEqual(pxp.argmin(self.q, axis=0), pxp.asarray([0, 0]))
+>>>>>>> bda9eba697f92e4bfe41a3f3813e589da7048eba
 
     def test_minimum(self):
         helpers.assert_quantity_equal(
@@ -463,7 +476,14 @@ class TestNumPyUnclassified(TestNumPyMethods):
         #     pxp.asarray(self.q) > 2 * self.ureg.m, xp.asarray([[False, False], [True, True]])
         # )
         self.assertNDArrayEqual(
+<<<<<<< HEAD
             pxp.asarray(self.q) < 2 * self.ureg.m, xp.asarray([[True, False], [False, False]])
+=======
+            self.q > 2 * self.ureg.m, pxp.asarray([[False, False], [True, True]])
+        )
+        self.assertNDArrayEqual(
+            self.q < 2 * self.ureg.m, pxp.asarray([[True, False], [False, False]])
+>>>>>>> bda9eba697f92e4bfe41a3f3813e589da7048eba
         )
 
     def test_where(self):
