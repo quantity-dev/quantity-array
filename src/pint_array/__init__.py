@@ -119,6 +119,9 @@ def pint_namespace(xp):
                 return NotImplemented
             return ArrayUnitQuantity(magnitude, units)
 
+        def __rmul__(self, other):
+            return self.__mul__(other)
+
         ## Linear Algebra Methods ##
         def __matmul__(self, other):
             return mod.matmul(self, other)
@@ -232,7 +235,6 @@ def pint_namespace(xp):
         "__lt__",
         "__ne__",
         "__or__",
-        "__truediv__",
         "__xor__",
         "__divmod__",
         "__floordiv__",
@@ -241,22 +243,21 @@ def pint_namespace(xp):
     unitless_rbinary_names = [
         "__radd__",
         "__rand__",
-        "__rdivmod__",
-        "__rfloordiv__",
-        "__rmod__",
-        "__rmul__",
         "__ror__",
         "__rpow__",
-        "__rrshift__",
-        "__rsub__",
-        "__rtruediv__",
         "__rxor__",
     ]
     for name in unitless_binary_names + unitless_rbinary_names:
 
         def method(self, other, name=name):
             units = self.units
-            magnitude_other = other.m_as(units) if hasattr(other, "units") else other
+            if name in ["__eq__", "__ne__", ]:
+                try:
+                    magnitude_other = other.m_as(units) if hasattr(other, "units") else other
+                except DimensionalityError:
+                    return xp.full_like(self.magnitude, False)
+            else:
+                magnitude_other = other.m_as(units) if hasattr(other, "units") else other
             magnitude = self._call_super_method(name, magnitude_other)
             # FIXME: correct units for op
             return magnitude
@@ -498,7 +499,7 @@ def pint_namespace(xp):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
         res = xp.nonzero(magnitude)
-        return tuple(ArrayUnitQuantity(magnitude_i, None) for magnitude_i in res)
+        return res
 
     mod.nonzero = nonzero
 
@@ -510,7 +511,7 @@ def pint_namespace(xp):
         magnitude_x2 = x2.m_as(x1.units)
 
         magnitude = xp.searchsorted(magnitude_x1, magnitude_x2, side=side)
-        return ArrayUnitQuantity(magnitude, None)
+        return magnitude
 
     mod.searchsorted = searchsorted
 
@@ -784,6 +785,7 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
 
     mod.pow = pow
+    setattr(ArrayUnitQuantity, "__pow__", pow)
 
     ## Indexing Functions
     def take(x, indices, /, **kwargs):
@@ -827,7 +829,7 @@ def pint_namespace(xp):
 
         return sort_fun
 
-    sort_names = ["sort", "argsort"]
+    sort_names = ["sort"]
     for name in sort_names:
         setattr(mod, name, get_sort_fun(name))
 

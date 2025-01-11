@@ -205,29 +205,25 @@ class TestNumPyMathematicalFunctions(TestNumPyMethods):
             op.add(b, a)
 
     def test_power(self):
-        arr = pxp.asarray(range(3), dtype=pxp.float32)
-        q = self.Q_(arr, "meter")
+        arr = xp.asarray(range(3), dtype=pxp.float32)
+        q  = pxp.asarray(range(3), dtype=pxp.float32, units="meter")
 
         for op_ in [pxp.pow]:
-            q_cp = copy.copy(q)
             with pytest.raises(DimensionalityError):
-                op_(2.0, q_cp)
-            arr_cp = copy.copy(arr)
-            q_cp = copy.copy(q)
+                op_(2.0, q)
             with pytest.raises(DimensionalityError):
-                op_(q_cp, arr_cp)
-            q_cp = copy.copy(q)
-            q2_cp = copy.copy(q)
+                op_(q, arr)
             with pytest.raises(DimensionalityError):
-                op_(q_cp, q2_cp)
+                op_(q, q)
 
+        q = pxp.asarray(self.q, dtype=pxp.float32)
         helpers.assert_quantity_equal(
-            pxp.pow(self.q, self.Q_(2)), self.Q_([[1, 4], [9, 16]], "m**2")
+            pxp.pow(q, self.Q_(2.)), pxp.asarray([[1, 4], [9, 16]], dtype=pxp.float32, units= "m**2")
         )
         helpers.assert_quantity_equal(
-            self.q ** self.Q_(2), self.Q_([[1, 4], [9, 16]], "m**2")
+            q ** self.Q_(2.), self.Q_([[1, 4], [9, 16]], "m**2")
         )
-        self.assertNDArrayEqual(arr ** self.Q_(2), pxp.asarray([0, 1, 4]))
+        self.assertNDArrayEqual(arr ** self.Q_(2.), xp.asarray([0, 1, 4]))
 
     def test_sqrt(self):
         q = self.Q_(100.0, "m**2")
@@ -264,13 +260,14 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_argsort_numpy_func(self):
         self.assertNDArrayEqual(
-            pxp.argsort(self.q, axis=0), pxp.asarray([[0, 0], [1, 1]])
+            pxp.argsort(pxp.asarray(self.q), axis=0), xp.asarray([[0, 0], [1, 1]])
         )
 
     def test_searchsorted_numpy_func(self):
         """Test searchsorted as numpy function."""
         q = self.q.flatten()
-        self.assertNDArrayEqual(pxp.searchsorted(q, [1.5, 2.5] * self.ureg.m), [1, 2])
+        self.assertNDArrayEqual(pxp.searchsorted(q, pxp.asarray([1.5, 2.5], units="m")), xp.asarray([1, 2])
+        )
 
     def test_nonzero_numpy_func(self):
         q = [1, 0, 5, 6, 0, 9] * self.ureg.m
@@ -399,17 +396,18 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_reversible_op(self):
         """ """
-        x = self.q.magnitude
-        u = self.Q_(pxp.ones(x.shape))
-        helpers.assert_quantity_equal(x / self.q, u * x / self.q)
-        helpers.assert_quantity_equal(x * self.q, u * x * self.q)
+        q=pxp.asarray(self.q, dtype=pxp.float64)
+        x = xp.asarray(self.q.magnitude, dtype=xp.float64)
+        u = pxp.asarray(pxp.ones(x.shape), dtype=pxp.float64)
+        helpers.assert_quantity_equal(x / q, u * x / q)
+        helpers.assert_quantity_equal(x * q, u * x * q)
         helpers.assert_quantity_equal(x + u, u + x)
         helpers.assert_quantity_equal(x - u, -(u - x))
 
     def test_equal(self):
         x = self.q.magnitude
         u = pxp.ones(x.shape)
-        false = pxp.zeros_like(x, dtype=pxp.bool)
+        false = xp.zeros_like(x, dtype=xp.bool)
 
         helpers.assert_quantity_equal(u, u)
         helpers.assert_quantity_equal(u, u.magnitude)
@@ -419,7 +417,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
         w = pxp.asarray((pxp.ones(x.shape)), units = "m")
         self.assertNDArrayEqual(v == 1, false)
         self.assertNDArrayEqual(
-            self.Q_(pxp.zeros_like(x), "m") == self.Q_(pxp.zeros_like(x), "s"),
+            pxp.asarray(pxp.zeros_like(x), units="m") == pxp.asarray(pxp.zeros_like(x), units="s") ,
             false,
         )
         self.assertNDArrayEqual(v == w, false)
