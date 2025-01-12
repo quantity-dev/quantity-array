@@ -701,7 +701,7 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, x.units**0.5)
 
     mod.sqrt = _sqrt
-    
+
     elementwise_two_arrays = [
         "add",
         "atan2",
@@ -829,20 +829,15 @@ def pint_namespace(xp):
     mod.matrix_transpose = matrix_transpose
 
     ## Sorting Functions ##
-    def get_sort_fun(func_str):
-        def sort_fun(x, /, **kwargs):
-            x = asarray(x)
-            magnitude = xp.asarray(x.magnitude, copy=True)
-            xp_func = getattr(xp, func_str)
-            magnitude = xp_func(magnitude, **kwargs)
-            units = x.units if func_str == "sort" else None
-            return ArrayUnitQuantity(magnitude, units)
+    def _sort(x, /, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        xp_func = getattr(xp, "sort")
+        magnitude = xp_func(magnitude, **kwargs)
+        units = x.units 
+        return ArrayUnitQuantity(magnitude, units)
 
-        return sort_fun
-
-    sort_names = ["sort"]
-    for name in sort_names:
-        setattr(mod, name, get_sort_fun(name))
+    mod.sort = _sort
 
     ## Set Functions ##
     def get_set_fun(func_str):
