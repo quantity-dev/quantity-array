@@ -536,7 +536,6 @@ def pint_namespace(xp):
 
     def searchsorted(x1, x2, /, *, side="left", sorter=None):
         if sorter is not None:
-            x1 = asarray(x1)
             x1 = take(x1, sorter)
 
         magnitude_x1 = xp.asarray(x1.magnitude, copy=True)
@@ -820,6 +819,7 @@ def pint_namespace(xp):
 
     ## Indexing Functions
     def take(x, indices, /, **kwargs):
+        x = asarray(x)
         magnitude = xp.take(x.magnitude, indices.magnitude, **kwargs)
         return ArrayUnitQuantity(magnitude, x.units)
 
