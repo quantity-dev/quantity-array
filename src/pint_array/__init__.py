@@ -9,6 +9,7 @@ import collections
 import contextlib
 import importlib
 import inspect
+import operator
 import sys
 import textwrap
 import types
@@ -108,20 +109,6 @@ def pint_namespace(xp):
                 f"  '{self.units}'\n)>"
             )
 
-        def __mul__(self, other):
-            if hasattr(other, "units"):
-                magnitude = self._call_super_method("__mul__", other.magnitude)
-                units = self.units * other.units
-            else:
-                magnitude = self._call_super_method("__mul__", other)
-                units = self.units
-            if magnitude is NotImplemented:
-                return NotImplemented
-            return ArrayUnitQuantity(magnitude, units)
-
-        def __rmul__(self, other):
-            return self.__mul__(other)
-
         ## Linear Algebra Methods ##
         def __matmul__(self, other):
             return mod.matmul(self, other)
@@ -193,25 +180,25 @@ def pint_namespace(xp):
         "__add__",
         "__sub__",
         "__and__",
-        "__mod__",
+        # "__mod__",
         # "__mul__",
-        # "__pow__",
-        "__truediv__",
-        "__divmod__",
-        "__floordiv__",
+        # # "__pow__",
+        # "__truediv__",
+        # "__divmod__",
+        # "__floordiv__",
     ]
     # Methods that return the result of an elementwise binary operation (reflected)
     rbinary_names = [
         "__radd__",
+        "__rsub__",
         "__rand__",
         "__rdivmod__",
         "__rfloordiv__",
         "__rmod__",
-        "__rmul__",
+        # "__rmul__",
         "__ror__",
         # "__rpow__",
-        "__rsub__",
-        "__rtruediv__",
+        # "__rtruediv__",
         "__rxor__",
     ]
     for name in binary_names + rbinary_names:
@@ -225,6 +212,43 @@ def pint_namespace(xp):
 
         setattr(ArrayQuantity, name, method)
 
+    calc_unit_names = [
+        "__mul__",
+        "__rmul__",
+        "__truediv__",
+        "__rtruediv__",
+        "__floordiv__",
+        "__rfloordiv__",
+        "__mod__",
+        "__rmod__",
+    ]
+    for name in calc_unit_names:
+
+        def method(self, other, name=name):
+            other = asarray(other)
+            op = getattr(operator, name)
+            if hasattr(other, "units"):
+                magnitude = self._call_super_method(name, other.magnitude)
+                units = op(self.units, other.units)
+            else:
+                magnitude = self._call_super_method(name, other)
+                units = self.units
+            if magnitude is NotImplemented:
+                return NotImplemented
+            return ArrayUnitQuantity(magnitude, units)
+
+    def method(self, other, name=name):
+        other = asarray(other)
+        op = getattr(operator, name)
+        if hasattr(other, "units"):
+            magnitude = self._call_super_method(name, other.magnitude)
+            units = op(self.units, other.units)
+        else:
+            magnitude = self._call_super_method(name, other)
+            units = self.units
+        if magnitude is NotImplemented:
+            return NotImplemented
+        return ArrayUnitQuantity(magnitude, units)
 
     # Methods that return the result of an elementwise binary operation
     unitless_binary_names = [
@@ -251,16 +275,21 @@ def pint_namespace(xp):
 
         def method(self, other, name=name):
             units = self.units
-            if name in ["__eq__", "__ne__", ]:
+            if name in [
+                "__eq__",
+                "__ne__",
+            ]:
                 try:
-                    magnitude_other = other.m_as(units) if hasattr(other, "units") else other
+                    magnitude_other = (
+                        other.m_as(units) if hasattr(other, "units") else other
+                    )
                 except DimensionalityError:
                     return xp.full_like(self.magnitude, False)
             else:
-                magnitude_other = other.m_as(units) if hasattr(other, "units") else other
-            magnitude = self._call_super_method(name, magnitude_other)
-            # FIXME: correct units for op
-            return magnitude
+                magnitude_other = (
+                    other.m_as(units) if hasattr(other, "units") else other
+                )
+            return self._call_super_method(name, magnitude_other)
 
         setattr(ArrayQuantity, name, method)
 
@@ -490,16 +519,14 @@ def pint_namespace(xp):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
             xp_func = getattr(xp, func_str)
-            magnitude = xp_func(magnitude, *args, **kwargs)
-            return magnitude
+            return xp_func(magnitude, *args, **kwargs)
 
         setattr(mod, func_str, func)
 
     def nonzero(x, /):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        res = xp.nonzero(magnitude)
-        return res
+        return xp.nonzero(magnitude)
 
     mod.nonzero = nonzero
 
@@ -510,8 +537,7 @@ def pint_namespace(xp):
         magnitude_x1 = xp.asarray(x1.magnitude, copy=True)
         magnitude_x2 = x2.m_as(x1.units)
 
-        magnitude = xp.searchsorted(magnitude_x1, magnitude_x2, side=side)
-        return magnitude
+        return xp.searchsorted(magnitude_x1, magnitude_x2, side=side)
 
     mod.searchsorted = searchsorted
 
@@ -785,7 +811,7 @@ def pint_namespace(xp):
         return ArrayUnitQuantity(magnitude, units)
 
     mod.pow = pow
-    setattr(ArrayUnitQuantity, "__pow__", pow)
+    ArrayUnitQuantity.__pow__ = pow
 
     ## Indexing Functions
     def take(x, indices, /, **kwargs):

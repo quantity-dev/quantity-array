@@ -13,6 +13,7 @@ import pint_array
 
 pxp = pint_array.pint_namespace(xp)
 
+
 class TestNumPyMethods:
     @classmethod
     def setup_class(cls):
@@ -44,7 +45,7 @@ class TestNumPyMethods:
 
     @property
     def q_temperature(self):
-        return pxp.asarray([[1, 2], [3, 4]], units = self.ureg.degC)
+        return pxp.asarray([[1, 2], [3, 4]], units=self.ureg.degC)
 
     def assertNDArrayEqual(self, actual, desired):
         # Assert that the given arrays are equal, and are not Quantities
@@ -83,7 +84,7 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
 
     def test_reshape(self):
         helpers.assert_quantity_equal(
-            pxp.reshape(self.q, [1, 4]), pxp.asarray([[1, 2, 3, 4]] ) * self.ureg.m
+            pxp.reshape(self.q, [1, 4]), pxp.asarray([[1, 2, 3, 4]]) * self.ureg.m
         )
 
     # Transpose-like operations
@@ -113,13 +114,14 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
 
     def test_expand_dims(self):
         helpers.assert_quantity_equal(
-            pxp.expand_dims(self.q, axis=0), pxp.asarray([[[1, 2], [3, 4]]]) * self.ureg.m
+            pxp.expand_dims(self.q, axis=0),
+            pxp.asarray([[[1, 2], [3, 4]]]) * self.ureg.m,
         )
 
     def test_squeeze(self):
         helpers.assert_quantity_equal(
-            pxp.squeeze(pxp.asarray([[[0], [1], [2]]]) *self.ureg.m, axis=0),
-            pxp.asarray([0,1,2]) * self.ureg.m
+            pxp.squeeze(pxp.asarray([[[0], [1], [2]]]) * self.ureg.m, axis=0),
+            pxp.asarray([0, 1, 2]) * self.ureg.m,
         )
 
     # Changing number of dimensions
@@ -129,7 +131,7 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
         for func in (pxp.concat, pxp.stack):
             with subtests.test(func=func):
                 helpers.assert_quantity_equal(
-                    func([self.q] * 2), pxp.asarray(func([self.q.m] * 2), units = "m")
+                    func([self.q] * 2), pxp.asarray(func([self.q.m] * 2), units="m")
                 )
                 # One or more of the args is a bare array full of zeros or NaNs
                 # helpers.assert_quantity_equal(
@@ -144,9 +146,9 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
                     func([nz.m, self.q])
 
     def test_astype(self):
-        dtype=pxp.float32
+        dtype = pxp.float32
         actual = pxp.astype(self.q, dtype)
-        expected = pxp.asarray([[1.0, 2.0], [3.0, 4.0]], dtype=dtype, units = "m")
+        expected = pxp.asarray([[1.0, 2.0], [3.0, 4.0]], dtype=dtype, units="m")
         helpers.assert_quantity_equal(actual, expected)
         assert actual.m.dtype == expected.m.dtype
 
@@ -154,12 +156,12 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
         helpers.assert_quantity_equal(self.Q_([[0]], "m").item(), 0 * self.ureg.m)
 
     def test_broadcast_arrays(self):
-        x = pxp.asarray([[1, 2, 3]], units= "m")
-        y = pxp.asarray([[4], [5]], units= "nm")
+        x = pxp.asarray([[1, 2, 3]], units="m")
+        y = pxp.asarray([[4], [5]], units="nm")
         result = pxp.broadcast_arrays(x, y)
         expected = (
-            pxp.asarray([[1, 2, 3], [1, 2, 3]], units= "m"),
-            pxp.asarray([[4, 4, 4], [5, 5, 5]], units= "nm")
+            pxp.asarray([[1, 2, 3], [1, 2, 3]], units="m"),
+            pxp.asarray([[4, 4, 4], [5, 5, 5]], units="nm"),
         )
         helpers.assert_quantity_equal(result, expected)
 
@@ -187,13 +189,13 @@ class TestNumPyMathematicalFunctions(TestNumPyMethods):
 
     # Arithmetic operations
     def test_addition_with_scalar(self):
-        a = pxp.asarray([0, 1, 2], dtype = pxp.float32)
+        a = pxp.asarray([0, 1, 2], dtype=pxp.float32)
         b = 10.0 * self.ureg("gram/kilogram")
         helpers.assert_quantity_almost_equal(
-            a + b, pxp.asarray([0.01, 1.01, 2.01], units = "")
+            a + b, pxp.asarray([0.01, 1.01, 2.01], units="")
         )
         helpers.assert_quantity_almost_equal(
-            b + a, pxp.asarray([0.01, 1.01, 2.01], units = "")
+            b + a, pxp.asarray([0.01, 1.01, 2.01], units="")
         )
 
     def test_addition_with_incompatible_scalar(self):
@@ -206,7 +208,7 @@ class TestNumPyMathematicalFunctions(TestNumPyMethods):
 
     def test_power(self):
         arr = xp.asarray(range(3), dtype=pxp.float32)
-        q  = pxp.asarray(range(3), dtype=pxp.float32, units="meter")
+        q = pxp.asarray(range(3), dtype=pxp.float32, units="meter")
 
         for op_ in [pxp.pow]:
             with pytest.raises(DimensionalityError):
@@ -218,12 +220,13 @@ class TestNumPyMathematicalFunctions(TestNumPyMethods):
 
         q = pxp.asarray(self.q, dtype=pxp.float32)
         helpers.assert_quantity_equal(
-            pxp.pow(q, self.Q_(2.)), pxp.asarray([[1, 4], [9, 16]], dtype=pxp.float32, units= "m**2")
+            pxp.pow(q, self.Q_(2.0)),
+            pxp.asarray([[1, 4], [9, 16]], dtype=pxp.float32, units="m**2"),
         )
         helpers.assert_quantity_equal(
-            q ** self.Q_(2.), self.Q_([[1, 4], [9, 16]], "m**2")
+            q ** self.Q_(2.0), self.Q_([[1, 4], [9, 16]], "m**2")
         )
-        self.assertNDArrayEqual(arr ** self.Q_(2.), xp.asarray([0, 1, 4]))
+        self.assertNDArrayEqual(arr ** self.Q_(2.0), xp.asarray([0, 1, 4]))
 
     def test_sqrt(self):
         q = self.Q_(100.0, "m**2")
@@ -266,7 +269,8 @@ class TestNumPyUnclassified(TestNumPyMethods):
     def test_searchsorted_numpy_func(self):
         """Test searchsorted as numpy function."""
         q = self.q.flatten()
-        self.assertNDArrayEqual(pxp.searchsorted(q, pxp.asarray([1.5, 2.5], units="m")), xp.asarray([1, 2])
+        self.assertNDArrayEqual(
+            pxp.searchsorted(q, pxp.asarray([1.5, 2.5], units="m")), xp.asarray([1, 2])
         )
 
     def test_nonzero_numpy_func(self):
@@ -315,12 +319,16 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_clip_numpy_func(self):
         helpers.assert_quantity_equal(
-            pxp.clip(pxp.asarray(self.q, dtype=pxp.float32), 150 * self.ureg.cm, None), [[1.5, 2], [3, 4]] * self.ureg.m
+            pxp.clip(pxp.asarray(self.q, dtype=pxp.float32), 150 * self.ureg.cm, None),
+            [[1.5, 2], [3, 4]] * self.ureg.m,
         )
 
     def test_round_numpy_func(self):
         helpers.assert_quantity_equal(
-            pxp.round(102.75 * self.ureg.m, ), 103 * self.ureg.m
+            pxp.round(
+                102.75 * self.ureg.m,
+            ),
+            103 * self.ureg.m,
         )
 
     def test_cumulative_sum(self):
@@ -330,24 +338,31 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_mean_numpy_func(self):
         assert pxp.mean(pxp.asarray(self.q, dtype=pxp.float32)) == 2.5 * self.ureg.m
-        assert pxp.mean(pxp.asarray(self.q_temperature, dtype=pxp.float32)) == self.Q_(2.5, self.ureg.degC)
+        assert pxp.mean(pxp.asarray(self.q_temperature, dtype=pxp.float32)) == self.Q_(
+            2.5, self.ureg.degC
+        )
 
     def test_var_numpy_func(self):
-        dtype=pxp.float32
+        dtype = pxp.float32
         assert pxp.var(pxp.asarray(self.q, dtype=dtype)) == 1.25 * self.ureg.m**2
-        assert pxp.var(pxp.asarray(self.q_temperature, dtype=dtype)) == 1.25 * self.ureg.delta_degC**2
+        assert (
+            pxp.var(pxp.asarray(self.q_temperature, dtype=dtype))
+            == 1.25 * self.ureg.delta_degC**2
+        )
 
     def test_std_numpy_func(self):
-        dtype=pxp.float32
+        dtype = pxp.float32
         helpers.assert_quantity_almost_equal(
             pxp.std(pxp.asarray(self.q, dtype=dtype)), 1.11803 * self.ureg.m, rtol=1e-5
         )
         helpers.assert_quantity_almost_equal(
-            pxp.std(pxp.asarray(self.q_temperature, dtype=dtype)), 1.11803 * self.ureg.delta_degC, rtol=1e-5
+            pxp.std(pxp.asarray(self.q_temperature, dtype=dtype)),
+            1.11803 * self.ureg.delta_degC,
+            rtol=1e-5,
         )
 
     def test_conj(self):
-        arr = pxp.asarray(self.q, dtype = pxp.complex64)  * (1 + 1j)
+        arr = pxp.asarray(self.q, dtype=pxp.complex64) * (1 + 1j)
         helpers.assert_quantity_equal(pxp.conj(arr), arr * (1 - 1j))
         # helpers.assert_quantity_equal(
         #     (self.q * (1 + 1j)).conjugate(), self.q * (1 - 1j)
@@ -396,7 +411,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_reversible_op(self):
         """ """
-        q=pxp.asarray(self.q, dtype=pxp.float64)
+        q = pxp.asarray(self.q, dtype=pxp.float64)
         x = xp.asarray(self.q.magnitude, dtype=xp.float64)
         u = pxp.asarray(pxp.ones(x.shape), dtype=pxp.float64)
         helpers.assert_quantity_equal(x / q, u * x / q)
@@ -413,11 +428,12 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(u, u.magnitude)
         helpers.assert_quantity_equal(u == 1, u.magnitude == 1)
 
-        v = pxp.asarray((pxp.zeros(x.shape)), units = "m")
-        w = pxp.asarray((pxp.ones(x.shape)), units = "m")
+        v = pxp.asarray((pxp.zeros(x.shape)), units="m")
+        w = pxp.asarray((pxp.ones(x.shape)), units="m")
         self.assertNDArrayEqual(v == 1, false)
         self.assertNDArrayEqual(
-            pxp.asarray(pxp.zeros_like(x), units="m") == pxp.asarray(pxp.zeros_like(x), units="s") ,
+            pxp.asarray(pxp.zeros_like(x), units="m")
+            == pxp.asarray(pxp.zeros_like(x), units="s"),
             false,
         )
         self.assertNDArrayEqual(v == w, false)
@@ -425,8 +441,8 @@ class TestNumPyUnclassified(TestNumPyMethods):
         self.assertNDArrayEqual(u == v, false)
 
     def test_dtype(self):
-        dtype=pxp.uint32
-        u = pxp.asarray([1, 2, 3], dtype=dtype)  * self.ureg.m
+        dtype = pxp.uint32
+        u = pxp.asarray([1, 2, 3], dtype=dtype) * self.ureg.m
 
         assert u.dtype == dtype
 
@@ -445,10 +461,12 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_comparisons(self):
         # self.assertNDArrayEqual(
-        #     pxp.asarray(self.q) > 2 * self.ureg.m, xp.asarray([[False, False], [True, True]])
+        #     pxp.asarray(self.q) > 2 * self.ureg.m,
+        #     xp.asarray([[False, False], [True, True]])
         # )
         self.assertNDArrayEqual(
-            pxp.asarray(self.q) < 2 * self.ureg.m, xp.asarray([[True, False], [False, False]])
+            pxp.asarray(self.q) < 2 * self.ureg.m,
+            xp.asarray([[True, False], [False, False]]),
         )
 
     def test_where(self):
@@ -466,7 +484,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
             [[pxp.nan, 2], [3, 4]] * self.ureg.m,
         )
         helpers.assert_quantity_equal(
-            pxp.where(q_float >= 3 * self.ureg.m, 0., q_float),
+            pxp.where(q_float >= 3 * self.ureg.m, 0.0, q_float),
             [[1, 2], [0, 0]] * self.ureg.m,
         )
         helpers.assert_quantity_equal(
@@ -474,11 +492,15 @@ class TestNumPyUnclassified(TestNumPyMethods):
             [[1, 2], [pxp.nan, pxp.nan]] * self.ureg.m,
         )
         helpers.assert_quantity_equal(
-            pxp.where(q_float >= 2 * self.ureg.m, q_float, pxp.asarray(pxp.nan)* self.ureg.m),
+            pxp.where(
+                q_float >= 2 * self.ureg.m, q_float, pxp.asarray(pxp.nan) * self.ureg.m
+            ),
             [[pxp.nan, 2], [3, 4]] * self.ureg.m,
         )
         helpers.assert_quantity_equal(
-            pxp.where(q_float >= 3 * self.ureg.m, pxp.asarray(pxp.nan)* self.ureg.m, q_float),
+            pxp.where(
+                q_float >= 3 * self.ureg.m, pxp.asarray(pxp.nan) * self.ureg.m, q_float
+            ),
             [[1, 2], [pxp.nan, pxp.nan]] * self.ureg.m,
         )
         with pytest.raises(DimensionalityError):
@@ -489,8 +511,12 @@ class TestNumPyUnclassified(TestNumPyMethods):
             )
 
         helpers.assert_quantity_equal(
-            pxp.where(pxp.asarray([-1., 0., 1.]) * self.ureg.m, pxp.asarray([1., 2., 1.]) * self.ureg.s, pxp.nan),
-            pxp.asarray([1., pxp.nan, 1.]) * self.ureg.s,
+            pxp.where(
+                pxp.asarray([-1.0, 0.0, 1.0]) * self.ureg.m,
+                pxp.asarray([1.0, 2.0, 1.0]) * self.ureg.s,
+                pxp.nan,
+            ),
+            pxp.asarray([1.0, pxp.nan, 1.0]) * self.ureg.s,
         )
         with pytest.raises(
             ValueError,
@@ -502,16 +528,11 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_tile(self):
         helpers.assert_quantity_equal(
-            pxp.tile(pxp.asarray([1,2,3,4]) *self.ureg.m, (4,1)),
-            pxp.asarray([[1, 2, 3, 4],
-                         [1, 2, 3, 4],
-                         [1, 2, 3, 4],
-                         [1, 2, 3, 4]]) * self.ureg.m
-                        )
+            pxp.tile(pxp.asarray([1, 2, 3, 4]) * self.ureg.m, (4, 1)),
+            pxp.asarray([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]])
+            * self.ureg.m,
+        )
         helpers.assert_quantity_equal(
-            pxp.tile(pxp.asarray([[1, 2], [3, 4]]) *self.ureg.m, (2,1)),
-            pxp.asarray([[1, 2],
-                        [3, 4],
-                        [1, 2],
-                        [3, 4]]) * self.ureg.m
-                        )   
+            pxp.tile(pxp.asarray([[1, 2], [3, 4]]) * self.ureg.m, (2, 1)),
+            pxp.asarray([[1, 2], [3, 4], [1, 2], [3, 4]]) * self.ureg.m,
+        )
