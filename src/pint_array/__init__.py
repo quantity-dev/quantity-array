@@ -241,19 +241,6 @@ def pint_namespace(xp):
                 return NotImplemented
             return ArrayUnitQuantity(magnitude, units)
 
-    def method(self, other, name=name):
-        other = asarray(other)
-        op = getattr(operator, name)
-        if hasattr(other, "units"):
-            magnitude = self._call_super_method(name, other.magnitude)
-            units = op(self.units, other.units)
-        else:
-            magnitude = self._call_super_method(name, other)
-            units = self.units
-        if magnitude is NotImplemented:
-            return NotImplemented
-        return ArrayUnitQuantity(magnitude, units)
-
     # Methods that return the result of an elementwise binary operation
     unitless_binary_names = [
         "__eq__",
@@ -361,9 +348,8 @@ def pint_namespace(xp):
         setattr(mod, func_str, fun)
 
     ## Manipulation Functions ##
-    first_arg_arrays = {"broadcast_arrays", "concat", "stack", "meshgrid"}
-    output_arrays = {"broadcast_arrays", "unstack", "meshgrid"}
-    arbitrary_num_arrays = {"broadcast_arrays", "meshgrid"}
+    first_arg_arrays = {"concat", "stack"}
+    output_arrays = {"unstack"}
 
     def get_manip_fun(func_str):
         def manip_fun(x, *args, **kwargs):
@@ -395,11 +381,7 @@ def pint_namespace(xp):
             ):
                 args[0] = repeats.magnitude
 
-            if func_str in arbitrary_num_arrays and not one_array:
-                args = [asarray(arg, units=x[0].units).magnitude for arg in args]
-                magnitude = xp_func(*magnitude, *args, **kwargs)
-            else:
-                magnitude = xp_func(magnitude, *args, **kwargs)
+            magnitude = xp_func(magnitude, *args, **kwargs)
 
             if func_str in output_arrays:
                 return tuple(
@@ -411,7 +393,6 @@ def pint_namespace(xp):
 
     creation_manip_functions = ["tril", "triu"]
     manip_names = [
-        "broadcast_arrays",
         "broadcast_to",
         "concat",
         "expand_dims",
@@ -430,7 +411,7 @@ def pint_namespace(xp):
         setattr(mod, name, get_manip_fun(name))
 
     def _meshgrid(*xi, **kwargs):
-        # Simply need to map input units to onto list of outputs
+        # Simply need to map input units onto list of outputs
         input_units = (x.units for x in xi)
         res = xp.meshgrid(*(x.magnitude for x in xi), **kwargs)
         return [out * unit for out, unit in zip(res, input_units, strict=False)]
