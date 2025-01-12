@@ -820,7 +820,7 @@ def pint_namespace(xp):
     ## Indexing Functions
     def take(x, indices, /, **kwargs):
         x = asarray(x)
-        magnitude = xp.take(x.magnitude, indices.magnitude, **kwargs)
+        magnitude = xp.take(x.magnitude, indices, **kwargs)
         return ArrayUnitQuantity(magnitude, x.units)
 
     mod.take = take
