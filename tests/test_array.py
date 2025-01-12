@@ -371,7 +371,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
     def test_getitem(self):
         with pytest.raises(IndexError):
             self.q.__getitem__((0, 10))
-        helpers.assert_quantity_equal(self.q[0], [1, 2] * self.ureg.m)
+        helpers.assert_quantity_equal(self.q[0, :], [1, 2] * self.ureg.m)
         assert self.q[1, 1] == 4 * self.ureg.m
 
     def test_setitem(self):
@@ -387,7 +387,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
             self.q[0] = 1 * self.ureg.J
 
         q = self.q.copy()
-        q[0] = 1 * self.ureg.m
+        q[0, :] = 1 * self.ureg.m
         helpers.assert_quantity_equal(q, [[1, 1], [3, 4]] * self.ureg.m)
 
         q = self.q.copy()
@@ -395,14 +395,14 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(q, [[1, 1], [1, 1]] * self.ureg.m)
 
         q = self.q.copy()
-        q[:] = 1 * self.ureg.m
+        q[:, :] = 1 * self.ureg.m
         helpers.assert_quantity_equal(q, [[1, 1], [1, 1]] * self.ureg.m)
 
         # check and see that dimensionless numbers work correctly
-        q = [0, 1, 2, 3] * self.ureg.dimensionless
+        q = pxp.asarray([0, 1, 2, 3], units=self.ureg.dimensionless)
         q[0] = 1
         helpers.assert_quantity_equal(q, pxp.asarray([1, 1, 2, 3]))
-        q[0] = self.ureg.m / self.ureg.mm
+        q[0] = 1 * self.ureg.m / self.ureg.mm
         helpers.assert_quantity_equal(q, pxp.asarray([1000, 1, 2, 3]))
 
         q = [0.0, 1.0, 2.0, 3.0] * self.ureg.m / self.ureg.mm

@@ -93,9 +93,13 @@ def pint_namespace(xp):
 
         def __setitem__(self, key, other):
             key = self._validate_key(key)
-            magnitude_other = (
-                other.m_as(self.units) if hasattr(other, "units") else other
-            )
+            if hasattr(other, "units"):
+                magnitude_other = other.m_as(self.units)
+            elif self.units.dimensionless:
+                magnitude_other = other
+            else:
+                other_units = "dimensionless"
+                raise DimensionalityError(other_units, self.units)
             return self.magnitude.__setitem__(key, magnitude_other)
 
         def __iter__(self):
