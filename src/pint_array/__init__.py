@@ -536,6 +536,7 @@ def pint_namespace(xp):
 
     def searchsorted(x1, x2, /, *, side="left", sorter=None):
         if sorter is not None:
+            x1 = asarray(x1)
             x1 = take(x1, sorter)
 
         magnitude_x1 = xp.asarray(x1.magnitude, copy=True)

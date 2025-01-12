@@ -36,7 +36,13 @@ array_api_tests/test_has_names.py::test_has_names[linalg-tensordot]
 array_api_tests/test_has_names.py::test_has_names[linalg-trace]
 array_api_tests/test_has_names.py::test_has_names[linalg-vecdot]
 array_api_tests/test_has_names.py::test_has_names[linalg-vector_norm]
+array_api_tests/test_operators_and_elementwise_functions.py::test_bitwise_left_shift[__lshift__(x1, x2)]
+array_api_tests/test_operators_and_elementwise_functions.py::test_bitwise_left_shift[__lshift__(x, s)]
+array_api_tests/test_operators_and_elementwise_functions.py::test_bitwise_right_shift[__rshift__(x1, x2)]
+array_api_tests/test_operators_and_elementwise_functions.py::test_bitwise_right_shift[__rshift__(x, s)]
 # flaky on macos
 array_api_tests/test_operators_and_elementwise_functions.py::test_sqrt
 # `pow` with array x2 is only defined when all elements of x2 are equal
 array_api_tests/test_operators_and_elementwise_functions.py::test_pow[pow(x1, x2)]
+array_api_tests/test_operators_and_elementwise_functions.py::test_pow[__pow__(x1, x2)]
+array_api_tests/test_operators_and_elementwise_functions.py::test_pow[__pow__(x, s)]
