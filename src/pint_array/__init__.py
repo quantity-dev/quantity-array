@@ -780,16 +780,19 @@ def pint_namespace(xp):
             units = x1.units ** as_scalar(x2_magnitude)
         else:
             x2_first_elem_magnitude = x2[(0,) * x2.ndim]
-            if not xp.all(x2_magnitude == x2_first_elem_magnitude):
+            if x1.unitless:
+                units = "dimensionless"
+            elif not xp.all(x2_magnitude == x2_first_elem_magnitude):
                 extra_msg = (
-                    "The exponent must be a scalar or an array of all the same value."
+                    "The first array must be unitless, or the exponent must be a scalar or an array of all the same value."
                 )
                 raise DimensionalityError(
                     x2.units,
                     "dimensionless",
                     extra_msg=extra_msg,
                 )
-            units = x1.units ** as_scalar(x2_first_elem_magnitude)
+            else:
+                units = x1.units ** as_scalar(x2_first_elem_magnitude)
 
         magnitude = xp.pow(x1.magnitude, x2_magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, units)
