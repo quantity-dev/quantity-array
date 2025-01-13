@@ -43,4 +43,4 @@ array_api_tests/test_operators_and_elementwise_functions.py::test_bitwise_right_
 # flaky on macos
 array_api_tests/test_operators_and_elementwise_functions.py::test_sqrt
 # `pow` with array x2 is only defined when all elements of x2 are equal
-#array_api_tests/test_operators_and_elementwise_functions.py::test_pow[__pow__(x, s)]
+array_api_tests/test_operators_and_elementwise_functions.py::test_pow[__pow__(x, s)]
