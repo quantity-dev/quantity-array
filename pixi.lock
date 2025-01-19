@@ -2420,7 +2420,7 @@ packages:
 - pypi: .
   name: quantity-array
   version: 0.0.1.dev0
-  sha256: ecdcd68ec4539c829811194884506f807f6544363ca20270268d8f0e733ff59f
+  sha256: c80d4a3605f84deb108a745bf8fbcdc3382797ba00e201cce996ccdef7d04d45
   requires_python: '>=3.10'
   editable: true
 - conda: https://prefix.dev/conda-forge/linux-64/readline-8.2-h8228510_1.conda
