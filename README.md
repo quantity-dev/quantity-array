@@ -1,5 +1,7 @@
-# pint-array
+# quantity-array
 
-Pint quantities with array API standard arrays.
+Quantities with array API standard arrays.
 
-hgrecco/pint#2101
+Currently based on [`pint`](https://github.com/hgrecco/pint), with a view to
+consuming a standardised Quantity API - see
+https://github.com/quantity-dev/discussions.

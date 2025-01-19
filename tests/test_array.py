@@ -7,9 +7,9 @@ import pytest
 from pint import DimensionalityError, OffsetUnitCalculusError
 from pint.testsuite import helpers
 
-import pint_array
+import quantity_array
 
-pxp = pint_array.pint_namespace(xp)
+pxp = quantity_array.quantity_namespace(xp)
 
 
 class TestArrayMethods:
@@ -451,7 +451,7 @@ class TestArrayUnclassified(TestArrayMethods):
     def test_comparisons(self):
         self.assertNDArrayEqual(
             pxp.asarray(self.q) > 2 * self.ureg.m,
-            xp.asarray([[False, False], [True, True]])
+            xp.asarray([[False, False], [True, True]]),
         )
         self.assertNDArrayEqual(
             pxp.asarray(self.q) < 2 * self.ureg.m,

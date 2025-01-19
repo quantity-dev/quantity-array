@@ -2010,12 +2010,6 @@ packages:
   - pkg:pypi/pint?source=hash-mapping
   size: 230217
   timestamp: 1733663596173
-- pypi: .
-  name: pint-array
-  version: 0.0.1.dev0
-  sha256: 4a89db66462f8ea5ad75b3a9e4b4b623805532b36abed68b124c6e67a3022bfe
-  requires_python: '>=3.10'
-  editable: true
 - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.3.6-pyhd8ed1ab_1.conda
   sha256: bb50f6499e8bc1d1a26f17716c97984671121608dc0c3ecd34858112bce59a27
   md5: 577852c7e53901ddccc7e6a9959ddebe
@@ -2423,6 +2417,12 @@ packages:
   - pkg:pypi/pyyaml?source=hash-mapping
   size: 181722
   timestamp: 1725456802746
+- pypi: .
+  name: quantity-array
+  version: 0.0.1.dev0
+  sha256: c80d4a3605f84deb108a745bf8fbcdc3382797ba00e201cce996ccdef7d04d45
+  requires_python: '>=3.10'
+  editable: true
 - conda: https://prefix.dev/conda-forge/linux-64/readline-8.2-h8228510_1.conda
   sha256: 5435cf39d039387fbdc977b0a762357ea909a7694d9528ab40f005e9208744d7
   md5: 47d31b792659ce70f470b5c82fdfb7a4

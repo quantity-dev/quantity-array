@@ -1,7 +1,7 @@
 import importlib.metadata
 
-import pint_array
+import quantity_array
 
 
 def test_version():
-    assert importlib.metadata.version("pint_array") == pint_array.__version__
+    assert importlib.metadata.version("quantity_array") == quantity_array.__version__
