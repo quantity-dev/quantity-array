@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import copy
 import operator as op
 
@@ -14,7 +12,7 @@ import pint_array
 pxp = pint_array.pint_namespace(xp)
 
 
-class TestNumPyMethods:
+class TestArrayMethods:
     @classmethod
     def setup_class(cls):
         from pint import _DEFAULT_REGISTRY
@@ -54,9 +52,7 @@ class TestNumPyMethods:
         assert not isinstance(desired, self.Q_)
 
 
-class TestNumPyArrayCreation(TestNumPyMethods):
-    # https://docs.scipy.org/doc/numpy/reference/routines.array-creation.html
-
+class TestArrayCreation(TestArrayMethods):
     @pytest.mark.xfail(reason="Scalar argument issue ")
     def test_ones_like(self):
         self.assertNDArrayEqual(pxp.ones_like(self.q), pxp.asarray([[1, 1], [1, 1]]))
@@ -79,7 +75,7 @@ class TestNumPyArrayCreation(TestNumPyMethods):
         self.assertNDArrayEqual(pxp.full_like(self.q, 2), pxp.asarray([[2, 2], [2, 2]]))
 
 
-class TestNumPyArrayManipulation(TestNumPyMethods):
+class TestArrayManipulation(TestArrayMethods):
     # Changing array shape
 
     def test_reshape(self):
@@ -171,9 +167,7 @@ class TestNumPyArrayManipulation(TestNumPyMethods):
         )
 
 
-class TestNumPyMathematicalFunctions(TestNumPyMethods):
-    # https://www.numpy.org/devdocs/reference/routines.math.html
-
+class TestArrayMathematicalFunctions(TestArrayMethods):
     def test_prod_numpy_func(self):
         axis = 0
 
@@ -251,7 +245,7 @@ class TestNumPyMathematicalFunctions(TestNumPyMethods):
             op.ipow(arr_cp, q_cp)
 
 
-class TestNumPyUnclassified(TestNumPyMethods):
+class TestArrayUnclassified(TestArrayMethods):
     def test_repeat(self):
         helpers.assert_quantity_equal(
             pxp.repeat(self.q, 2), [1, 1, 2, 2, 3, 3, 4, 4] * self.ureg.m
@@ -325,9 +319,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
 
     def test_round_numpy_func(self):
         helpers.assert_quantity_equal(
-            pxp.round(
-                102.75 * self.ureg.m,
-            ),
+            pxp.round(102.75 * self.ureg.m),
             103 * self.ureg.m,
         )
 
@@ -364,9 +356,7 @@ class TestNumPyUnclassified(TestNumPyMethods):
     def test_conj(self):
         arr = pxp.asarray(self.q, dtype=pxp.complex64) * (1 + 1j)
         helpers.assert_quantity_equal(pxp.conj(arr), arr * (1 - 1j))
-        # helpers.assert_quantity_equal(
-        #     (self.q * (1 + 1j)).conjugate(), self.q * (1 - 1j)
-        # )
+        helpers.assert_quantity_equal((arr * (1 + 1j)).conj(), arr * (1 - 1j))
 
     def test_getitem(self):
         with pytest.raises(IndexError):
@@ -410,7 +400,6 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(q, [0.001, 1, 2, 3] * self.ureg.m / self.ureg.mm)
 
     def test_reversible_op(self):
-        """ """
         q = pxp.asarray(self.q, dtype=pxp.float64)
         x = xp.asarray(self.q.magnitude, dtype=xp.float64)
         u = pxp.asarray(pxp.ones(x.shape), dtype=pxp.float64)
@@ -460,10 +449,10 @@ class TestNumPyUnclassified(TestNumPyMethods):
         helpers.assert_quantity_equal(yy, [[0, 0], [50, 50], [100, 100]] * self.ureg.mm)
 
     def test_comparisons(self):
-        # self.assertNDArrayEqual(
-        #     pxp.asarray(self.q) > 2 * self.ureg.m,
-        #     xp.asarray([[False, False], [True, True]])
-        # )
+        self.assertNDArrayEqual(
+            pxp.asarray(self.q) > 2 * self.ureg.m,
+            xp.asarray([[False, False], [True, True]])
+        )
         self.assertNDArrayEqual(
             pxp.asarray(self.q) < 2 * self.ureg.m,
             xp.asarray([[True, False], [False, False]]),
