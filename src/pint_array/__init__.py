@@ -184,6 +184,8 @@ def pint_namespace(xp):
         "__add__",
         "__sub__",
         "__and__",
+        "__lshift__",
+        "__rshift__",
         # "__mod__",
         # "__mul__",
         # # "__pow__",
