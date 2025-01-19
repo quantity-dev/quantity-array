@@ -23,6 +23,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 requires-python = ">=3.10"
+dependencies = ["pint", "array-api-compat"]
 
 [project.urls]
 Homepage = "https://github.com/quantity-dev/quantity-array"
@@ -37,7 +38,6 @@ platforms = ["linux-64", "osx-arm64", "win-64"]
 [tool.pixi.dependencies]
 pint = ">=0.24.4,<0.25"
 array-api-compat = ">=1.10.0,<2"
-array-api-strict = ">=2.2,<3"
 
 [tool.pixi.pypi-dependencies]
 quantity-array = { path = ".", editable = true }
@@ -53,6 +53,7 @@ ipython = "ipython"
 [tool.pixi.feature.tests.dependencies]
 pytest = "*"
 pytest-subtests = "*"
+array-api-strict = ">=2.2,<3"
 
 [tool.pixi.feature.tests.tasks]
 tests = "pytest tests"
