@@ -5,4 +5,4 @@
 5. Update the version to `{next micro version}.dev0`
 6. `pixi clean cache --pypi && pixi update && pixi install`
 7. Push your changes
-8. Merge the automated PR to conda-forge/array-api-extra-feedstock
+8. Merge the automated PR to conda-forge/quantity-array-feedstock
