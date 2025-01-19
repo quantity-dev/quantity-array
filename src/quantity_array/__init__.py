@@ -14,7 +14,7 @@ from array_api_compat import size
 from pint import DimensionalityError, Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
 
-__version__ = "0.0.1.dev0"
+__version__ = "0.0.1"
 __all__ = ["__version__", "quantity_namespace"]
 
 

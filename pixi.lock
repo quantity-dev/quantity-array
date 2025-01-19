@@ -2419,7 +2419,7 @@ packages:
   timestamp: 1725456802746
 - pypi: .
   name: quantity-array
-  version: 0.0.1.dev0
+  version: 0.0.1
   sha256: c80d4a3605f84deb108a745bf8fbcdc3382797ba00e201cce996ccdef7d04d45
   requires_python: '>=3.10'
   editable: true
