@@ -9,13 +9,14 @@ import collections
 import contextlib
 import importlib
 import inspect
+import operator
 import sys
 import textwrap
 import types
 from typing import Generic
 
 from array_api_compat import size
-from pint import Quantity
+from pint import DimensionalityError, Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
 
 __version__ = "0.0.1.dev0"
@@ -92,9 +93,13 @@ def pint_namespace(xp):
 
         def __setitem__(self, key, other):
             key = self._validate_key(key)
-            magnitude_other = (
-                other.m_as(self.units) if hasattr(other, "units") else other
-            )
+            if hasattr(other, "units"):
+                magnitude_other = other.m_as(self.units)
+            elif self.units.dimensionless:
+                magnitude_other = other
+            else:
+                other_units = "dimensionless"
+                raise DimensionalityError(other_units, self.units)
             return self.magnitude.__setitem__(key, magnitude_other)
 
         def __iter__(self):
@@ -107,22 +112,6 @@ def pint_namespace(xp):
                 f"{textwrap.indent(repr(self._magnitude), '  ')},\n"
                 f"  '{self.units}'\n)>"
             )
-
-        def __mul__(self, other):
-            if hasattr(other, "units"):
-                magnitude = self._call_super_method("__mul__", other.magnitude)
-                units = self.units * other.units
-            else:
-                magnitude = self._call_super_method("__mul__", other)
-                units = self.units
-            return ArrayUnitQuantity(magnitude, units)
-
-        def __gt__(self, other):
-            if hasattr(other, "units"):
-                magnitude = self._call_super_method("__gt__", other.magnitude)
-            else:
-                magnitude = self._call_super_method("__gt__", other)
-            return ArrayUnitQuantity(magnitude, None)
 
         ## Linear Algebra Methods ##
         def __matmul__(self, other):
@@ -195,38 +184,27 @@ def pint_namespace(xp):
         "__add__",
         "__sub__",
         "__and__",
-        "__eq__",
-        "__ge__",
-        # "__gt__",
-        "__le__",
         "__lshift__",
-        "__lt__",
-        "__mod__",
-        # "__mul__",
-        "__ne__",
-        "__or__",
-        "__pow__",
         "__rshift__",
-        "__sub__",
-        "__truediv__",
-        "__xor__",
-        "__divmod__",
-        "__floordiv__",
+        # "__mod__",
+        # "__mul__",
+        # # "__pow__",
+        # "__truediv__",
+        # "__divmod__",
+        # "__floordiv__",
     ]
     # Methods that return the result of an elementwise binary operation (reflected)
     rbinary_names = [
         "__radd__",
+        "__rsub__",
         "__rand__",
         "__rdivmod__",
         "__rfloordiv__",
-        "__rlshift__",
         "__rmod__",
-        "__rmul__",
+        # "__rmul__",
         "__ror__",
-        "__rpow__",
-        "__rrshift__",
-        "__rsub__",
-        "__rtruediv__",
+        # "__rpow__",
+        # "__rtruediv__",
         "__rxor__",
     ]
     for name in binary_names + rbinary_names:
@@ -237,6 +215,74 @@ def pint_namespace(xp):
             magnitude = self._call_super_method(name, magnitude_other)
             # FIXME: correct units for op
             return ArrayUnitQuantity(magnitude, units)
+
+        setattr(ArrayQuantity, name, method)
+
+    calc_unit_names = [
+        "__mul__",
+        "__rmul__",
+        "__truediv__",
+        "__rtruediv__",
+        "__floordiv__",
+        "__rfloordiv__",
+        "__mod__",
+        "__rmod__",
+    ]
+    for name in calc_unit_names:
+
+        def method(self, other, name=name):
+            other = asarray(other)
+            op = getattr(operator, name)
+            if hasattr(other, "units"):
+                magnitude = self._call_super_method(name, other.magnitude)
+                units = op(self.units, other.units)
+            else:
+                magnitude = self._call_super_method(name, other)
+                units = self.units
+            if magnitude is NotImplemented:
+                return NotImplemented
+            return ArrayUnitQuantity(magnitude, units)
+
+    # Methods that return the result of an elementwise binary operation
+    unitless_binary_names = [
+        "__eq__",
+        "__ge__",
+        "__gt__",
+        "__le__",
+        "__lt__",
+        "__ne__",
+        "__or__",
+        "__xor__",
+        "__divmod__",
+        "__floordiv__",
+    ]
+    # Methods that return the result of an elementwise binary operation (reflected)
+    unitless_rbinary_names = [
+        "__radd__",
+        "__rand__",
+        "__ror__",
+        "__rpow__",
+        "__rxor__",
+    ]
+    for name in unitless_binary_names + unitless_rbinary_names:
+
+        def method(self, other, name=name):
+            units = self.units
+            if name in [
+                "__eq__",
+                "__ne__",
+            ]:
+                try:
+                    magnitude_other = (
+                        other.m_as(units) if hasattr(other, "units") else other
+                    )
+                except DimensionalityError:
+                    return xp.full_like(self.magnitude, False)
+            else:
+                magnitude_other = (
+                    other.m_as(units) if hasattr(other, "units") else other
+                )
+            return self._call_super_method(name, magnitude_other)
 
         setattr(ArrayQuantity, name, method)
 
@@ -304,9 +350,8 @@ def pint_namespace(xp):
         setattr(mod, func_str, fun)
 
     ## Manipulation Functions ##
-    first_arg_arrays = {"broadcast_arrays", "concat", "stack", "meshgrid"}
-    output_arrays = {"broadcast_arrays", "unstack", "meshgrid"}
-    arbitrary_num_arrays = {"broadcast_arrays", "meshgrid"}
+    first_arg_arrays = {"concat", "stack"}
+    output_arrays = {"unstack"}
 
     def get_manip_fun(func_str):
         def manip_fun(x, *args, **kwargs):
@@ -338,10 +383,7 @@ def pint_namespace(xp):
             ):
                 args[0] = repeats.magnitude
 
-            if func_str in arbitrary_num_arrays and not one_array:
-                magnitude = xp_func(*magnitude, *args, **kwargs)
-            else:
-                magnitude = xp_func(magnitude, *args, **kwargs)
+            magnitude = xp_func(magnitude, *args, **kwargs)
 
             if func_str in output_arrays:
                 return tuple(
@@ -351,9 +393,8 @@ def pint_namespace(xp):
 
         return manip_fun
 
-    creation_manip_functions = ["tril", "triu", "meshgrid"]
+    creation_manip_functions = ["tril", "triu"]
     manip_names = [
-        "broadcast_arrays",
         "broadcast_to",
         "concat",
         "expand_dims",
@@ -370,6 +411,24 @@ def pint_namespace(xp):
     ]
     for name in manip_names + creation_manip_functions:
         setattr(mod, name, get_manip_fun(name))
+
+    def _meshgrid(*xi, **kwargs):
+        # Simply need to map input units onto list of outputs
+        input_units = (x.units for x in xi)
+        res = xp.meshgrid(*(x.magnitude for x in xi), **kwargs)
+        return [out * unit for out, unit in zip(res, input_units, strict=False)]
+
+    mod.meshgrid = _meshgrid
+
+    def _broadcast_arrays(*arrays):
+        arrays = [asarray(array) for array in arrays]
+        res = xp.broadcast_arrays(*[array.magnitude for array in arrays])
+        return [
+            ArrayUnitQuantity(magnitude, array.units)
+            for magnitude, array in zip(res, arrays, strict=False)
+        ]
+
+    mod.broadcast_arrays = _broadcast_arrays
 
     ## Data Type Functions and Data Types ##
     dtype_fun_names = ["can_cast", "finfo", "iinfo", "result_type"]
@@ -435,7 +494,8 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, func)
 
-    # Functions which ignore units on input and output
+    # Functions which ignore units on input and output, and return a bool/int
+    # as a non-Quantity array
     for func_str in (
         "argsort",
         "argmin",
@@ -446,16 +506,14 @@ def pint_namespace(xp):
             x = asarray(x)
             magnitude = xp.asarray(x.magnitude, copy=True)
             xp_func = getattr(xp, func_str)
-            magnitude = xp_func(magnitude, *args, **kwargs)
-            return ArrayUnitQuantity(magnitude, None)
+            return xp_func(magnitude, *args, **kwargs)
 
         setattr(mod, func_str, func)
 
     def nonzero(x, /):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        res = xp.nonzero(magnitude)
-        return tuple(ArrayUnitQuantity(magnitude_i, None) for magnitude_i in res)
+        return xp.nonzero(magnitude)
 
     mod.nonzero = nonzero
 
@@ -466,16 +524,29 @@ def pint_namespace(xp):
         magnitude_x1 = xp.asarray(x1.magnitude, copy=True)
         magnitude_x2 = x2.m_as(x1.units)
 
-        magnitude = xp.searchsorted(magnitude_x1, magnitude_x2, side=side)
-        return ArrayUnitQuantity(magnitude, None)
+        return xp.searchsorted(magnitude_x1, magnitude_x2, side=side)
 
     mod.searchsorted = searchsorted
 
     # ignore units of condition, convert x2 to units of x1
     def where(condition, x1, x2, /):
+        if not getattr(condition, "_is_multiplicative", True):
+            msg = (
+                "Invalid units of the condition: "
+                "Boolean value of Quantity with offset unit is ambiguous."
+            )
+            raise ValueError(msg)
+
         condition = asarray(condition)
-        x1 = asarray(x1)
-        x2 = asarray(x2)
+        if hasattr(x1, "units") and hasattr(x2, "units"):
+            x1 = asarray(x1)
+            x2 = asarray(x2)
+        elif hasattr(x1, "units"):
+            x1 = asarray(x1)
+            x2 = asarray(x2, units=x1.units)
+        elif hasattr(x2, "units"):
+            x1 = asarray(x1, units=x2.units)
+            x2 = asarray(x2)
         units = x1.units
         magnitude = xp.where(condition.magnitude, x1.magnitude, x2.m_as(units))
         return ArrayUnitQuantity(magnitude, units)
@@ -610,7 +681,6 @@ def pint_namespace(xp):
         "sin",
         "sinh",
         "square",
-        "sqrt",
         "tan",
         "tanh",
         "trunc",
@@ -624,6 +694,15 @@ def pint_namespace(xp):
             return ArrayUnitQuantity(magnitude, x.units)
 
         setattr(mod, func_str, fun)
+
+
+    def _sqrt(x, /, *args, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        magnitude = getattr(xp, "sqrt")(magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, x.units**0.5)
+
+    mod.sqrt = _sqrt
 
     elementwise_two_arrays = [
         "add",
@@ -648,9 +727,7 @@ def pint_namespace(xp):
         "logical_xor",
         "maximum",
         "minimum",
-        "multiply",
         "not_equal",
-        "pow",
         "remainder",
         "subtract",
     ]
@@ -685,9 +762,50 @@ def pint_namespace(xp):
 
     mod.multiply = multiply
 
+    def pow(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        if not x2.units.dimensionless:
+            raise DimensionalityError(x2.units, "dimensionless")
+        x2_magnitude = x2.magnitude
+        x2_magnitude_dtype = x2_magnitude.dtype
+        if xp.isdtype(x2_magnitude_dtype, "complex floating"):
+            as_scalar = complex
+        elif xp.isdtype(x2_magnitude_dtype, "real floating"):
+            as_scalar = float
+        elif xp.isdtype(x2_magnitude_dtype, "integral"):
+            as_scalar = int
+        else:
+            as_scalar = bool
+        if x2.ndim == 0:
+            units = x1.units ** as_scalar(x2_magnitude)
+        else:
+            x2_first_elem_magnitude = x2[(0,) * x2.ndim]
+            if x1.unitless:
+                units = "dimensionless"
+            elif not xp.all(x2_magnitude == x2_first_elem_magnitude):
+                extra_msg = (
+                    "The first array must be unitless, or the exponent must be a scalar or an array of all the same value."
+                )
+                raise DimensionalityError(
+                    x2.units,
+                    "dimensionless",
+                    extra_msg=extra_msg,
+                )
+            else:
+                units = x1.units ** as_scalar(x2_first_elem_magnitude)
+
+        magnitude = xp.pow(x1.magnitude, x2_magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.pow = pow
+    ArrayUnitQuantity.__pow__ = pow
+
     ## Indexing Functions
     def take(x, indices, /, **kwargs):
-        magnitude = xp.take(x.magnitude, indices.magnitude, **kwargs)
+        x = asarray(x)
+        magnitude = xp.take(x.magnitude, indices, **kwargs)
         return ArrayUnitQuantity(magnitude, x.units)
 
     mod.take = take
@@ -710,25 +828,21 @@ def pint_namespace(xp):
         setattr(mod, name, get_linalg_fun(name))
 
     def matrix_transpose(x):
+        x = asarray(x)
         return x.mT
 
     mod.matrix_transpose = matrix_transpose
 
     ## Sorting Functions ##
-    def get_sort_fun(func_str):
-        def sort_fun(x, /, **kwargs):
-            x = asarray(x)
-            magnitude = xp.asarray(x.magnitude, copy=True)
-            xp_func = getattr(xp, func_str)
-            magnitude = xp_func(magnitude, **kwargs)
-            units = x.units if func_str == "sort" else None
-            return ArrayUnitQuantity(magnitude, units)
+    def _sort(x, /, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        xp_func = getattr(xp, "sort")
+        magnitude = xp_func(magnitude, **kwargs)
+        units = x.units 
+        return ArrayUnitQuantity(magnitude, units)
 
-        return sort_fun
-
-    sort_names = ["sort", "argsort"]
-    for name in sort_names:
-        setattr(mod, name, get_sort_fun(name))
+    mod.sort = _sort
 
     ## Set Functions ##
     def get_set_fun(func_str):
@@ -868,5 +982,7 @@ def pint_namespace(xp):
 
             with contextlib.suppress(AttributeError, TypeError):
                 mod_attr.__name__ = xp_attr.__name__
+
+    mod.ArrayUnitQuantity = ArrayUnitQuantity
 
     return mod
