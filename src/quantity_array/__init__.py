@@ -1,9 +1,4 @@
-"""
-pint_array
-~~~~~~~~~~
-
-Pint interoperability with array API standard arrays.
-"""
+"""Quantities with array API standard arrays."""
 
 import collections
 import contextlib
@@ -20,21 +15,21 @@ from pint import DimensionalityError, Quantity
 from pint.facets.plain import MagnitudeT, PlainQuantity
 
 __version__ = "0.0.1.dev0"
-__all__ = ["__version__", "pint_namespace"]
+__all__ = ["__version__", "quantity_namespace"]
 
 
 def __getattr__(name):
     try:
         xp = importlib.import_module(name)
-        mod = pint_namespace(xp)
+        mod = quantity_namespace(xp)
         sys.modules[f"marray.{name}"] = mod
         return mod
     except ModuleNotFoundError as e:
         raise AttributeError(str(e)) from None
 
 
-def pint_namespace(xp):
-    mod = types.ModuleType(f"pint({xp.__name__})")
+def quantity_namespace(xp):
+    mod = types.ModuleType(f"quantity({xp.__name__})")
 
     class ArrayQuantity(Generic[MagnitudeT], PlainQuantity[MagnitudeT]):
         def __init__(self, *args, **kwargs):  # noqa: ARG002
@@ -695,11 +690,10 @@ def pint_namespace(xp):
 
         setattr(mod, func_str, fun)
 
-
     def _sqrt(x, /, *args, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        magnitude = getattr(xp, "sqrt")(magnitude, *args, **kwargs)
+        magnitude = xp.sqrt(magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, x.units**0.5)
 
     mod.sqrt = _sqrt
@@ -785,9 +779,7 @@ def pint_namespace(xp):
             if x1.unitless:
                 units = "dimensionless"
             elif not xp.all(x2_magnitude == x2_first_elem_magnitude):
-                extra_msg = (
-                    "The first array must be unitless, or the exponent must be a scalar or an array of all the same value."
-                )
+                extra_msg = "The first array must be unitless, or the exponent must be a scalar or an array of all the same value."
                 raise DimensionalityError(
                     x2.units,
                     "dimensionless",
@@ -837,9 +829,9 @@ def pint_namespace(xp):
     def _sort(x, /, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        xp_func = getattr(xp, "sort")
+        xp_func = xp.sort
         magnitude = xp_func(magnitude, **kwargs)
-        units = x.units 
+        units = x.units
         return ArrayUnitQuantity(magnitude, units)
 
     mod.sort = _sort
@@ -960,7 +952,7 @@ def pint_namespace(xp):
     preface = [
         "The following is the documentation for the corresponding "
         f"attribute of `{xp.__name__}`.",
-        "The behavior on pint-wrapped arrays is the same for dimensionless "
+        "The behavior on quantity-wrapped arrays is the same for dimensionless "
         "quantities, and may differ for quantities with units.\n\n",
     ]
     preface = "\n".join(preface)

@@ -5,18 +5,19 @@ build-backend = "hatchling.build"
 [project]
 authors = [
     { name = "Lucas Colley", email = "lucas.colley8@gmail.com" },
+    # { name = "Open Source Contributors" },  # https://github.com/pypi/warehouse/issues/14813
 ]
-name = "pint-array"
-description = "Pint quantities with array API standard arrays."
+name = "quantity-array"
+description = "Quantities with array API standard arrays."
 readme = "README.md"
 dynamic = ["version"]
 requires-python = ">=3.10"
 
 [project.urls]
-Homepage = "https://github.com/lucascolley/pint-array"
+Homepage = "https://github.com/quantity-dev/quantity-array"
 
 [tool.hatch]
-version.path = "src/pint_array/__init__.py"
+version.path = "src/quantity_array/__init__.py"
 
 [tool.pixi.project]
 channels = ["https://prefix.dev/conda-forge"]
@@ -28,7 +29,7 @@ array-api-compat = ">=1.10.0,<2"
 array-api-strict = ">=2.2,<3"
 
 [tool.pixi.pypi-dependencies]
-pint-array = { path = ".", editable = true }
+quantity-array = { path = ".", editable = true }
 
 [tool.pixi.feature.dev.dependencies]
 ipython = ">=8.31.0,<9"
@@ -91,7 +92,7 @@ xp-tests.cmd = [
     "--disable-deadline",
     "array_api_tests/",
 ]
-xp-tests.env.ARRAY_API_TESTS_MODULE = "pint_array.array_api_strict"
+xp-tests.env.ARRAY_API_TESTS_MODULE = "quantity_array.array_api_strict"
 xp-tests.cwd = "array-api-tests"
 xp-tests.depends-on = ["clone-xp-tests"]
 
@@ -109,7 +110,7 @@ ci-py313 = ["py313", "tests", "xp-tests"]
 
 [tool.ruff]
 target-version = "py310"
-exclude = ["src/pint_array/funcs.py"]
+exclude = ["src/quantity_array/funcs.py"]
 
 [tool.ruff.lint]
 extend-select = [
