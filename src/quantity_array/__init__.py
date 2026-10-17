@@ -749,7 +749,7 @@ def quantity_namespace(xp):
         units = x1.units * x2.units
 
         x1_magnitude = xp.asarray(x1.magnitude, copy=True)
-        x2_magnitude = x2.m_as(x1.units)
+        x2_magnitude = x2.magnitude
 
         magnitude = xp.multiply(x1_magnitude, x2_magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, units)

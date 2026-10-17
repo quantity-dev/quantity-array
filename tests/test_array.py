@@ -525,3 +525,20 @@ class TestArrayUnclassified(TestArrayMethods):
             pxp.tile(pxp.asarray([[1, 2], [3, 4]]) * self.ureg.m, (2, 1)),
             pxp.asarray([[1, 2], [3, 4], [1, 2], [3, 4]]) * self.ureg.m,
         )
+
+
+class TestMultiplyUnits(TestArrayMethods):
+    def test_multiply_units(self):
+        result = pxp.multiply(
+            pxp.asarray([1.0], units="m"), pxp.asarray([1.0], units="mm")
+        )
+        assert result.units == self.ureg.m * self.ureg.mm
+        np.testing.assert_allclose(
+            np.asarray(result.m_as("m**2"), dtype=float), [1e-3]
+        )
+
+        result = pxp.multiply(
+            pxp.asarray([2.0], units="m"), pxp.asarray([3.0], units="s")
+        )
+        assert result.units == self.ureg.m * self.ureg.s
+        np.testing.assert_allclose(np.asarray(result.m_as("m*s"), dtype=float), [6.0])
