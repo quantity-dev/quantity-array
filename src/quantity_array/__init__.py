@@ -675,7 +675,6 @@ def quantity_namespace(xp):
         "signbit",
         "sin",
         "sinh",
-        "square",
         "tan",
         "tanh",
         "trunc",
@@ -698,6 +697,14 @@ def quantity_namespace(xp):
 
     mod.sqrt = _sqrt
 
+    def _square(x, /, *args, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        magnitude = xp.square(magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, x.units**2)
+
+    mod.square = _square
+
     elementwise_two_arrays = [
         "add",
         "atan2",
@@ -707,9 +714,7 @@ def quantity_namespace(xp):
         "bitwise_right_shift",
         "bitwise_xor",
         "copysign",
-        "divide",
         "equal",
-        "floor_divide",
         "greater",
         "greater_equal",
         "hypot",
@@ -749,12 +754,40 @@ def quantity_namespace(xp):
         units = x1.units * x2.units
 
         x1_magnitude = xp.asarray(x1.magnitude, copy=True)
-        x2_magnitude = x2.m_as(x1.units)
+        x2_magnitude = x2.magnitude
 
         magnitude = xp.multiply(x1_magnitude, x2_magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, units)
 
     mod.multiply = multiply
+
+    def divide(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        units = x1.units / x2.units
+
+        x1_magnitude = xp.asarray(x1.magnitude, copy=True)
+        x2_magnitude = x2.magnitude
+
+        magnitude = xp.divide(x1_magnitude, x2_magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.divide = divide
+
+    def floor_divide(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        units = x1.units / x2.units
+
+        x1_magnitude = xp.asarray(x1.magnitude, copy=True)
+        x2_magnitude = x2.magnitude
+
+        magnitude = xp.floor_divide(x1_magnitude, x2_magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.floor_divide = floor_divide
 
     def pow(x1, x2, /, *args, **kwargs):
         x1 = asarray(x1)
