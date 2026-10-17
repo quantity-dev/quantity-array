@@ -542,3 +542,31 @@ class TestMultiplyUnits(TestArrayMethods):
         )
         assert result.units == self.ureg.m * self.ureg.s
         np.testing.assert_allclose(np.asarray(result.m_as("m*s"), dtype=float), [6.0])
+
+
+class TestDivideUnits(TestArrayMethods):
+    def test_divide_units(self):
+        result = pxp.divide(
+            pxp.asarray([2.0], units="m"), pxp.asarray([1.0], units="m")
+        )
+        assert result.units == self.ureg.dimensionless
+        np.testing.assert_allclose(np.asarray(result.m_as(""), dtype=float), [2.0])
+
+        result = pxp.divide(
+            pxp.asarray([6.0], units="m"), pxp.asarray([3.0], units="s")
+        )
+        assert result.units == self.ureg.m / self.ureg.s
+        np.testing.assert_allclose(np.asarray(result.m_as("m/s"), dtype=float), [2.0])
+
+    def test_floor_divide_units(self):
+        result = pxp.floor_divide(
+            pxp.asarray([7.0], units="m"), pxp.asarray([2.0], units="m")
+        )
+        assert result.units == self.ureg.dimensionless
+        np.testing.assert_allclose(np.asarray(result.m_as(""), dtype=float), [3.0])
+
+        result = pxp.floor_divide(
+            pxp.asarray([6.0], units="m"), pxp.asarray([4.0], units="s")
+        )
+        assert result.units == self.ureg.m / self.ureg.s
+        np.testing.assert_allclose(np.asarray(result.m_as("m/s"), dtype=float), [1.0])
