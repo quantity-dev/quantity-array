@@ -675,7 +675,6 @@ def quantity_namespace(xp):
         "signbit",
         "sin",
         "sinh",
-        "square",
         "tan",
         "tanh",
         "trunc",
@@ -697,6 +696,14 @@ def quantity_namespace(xp):
         return ArrayUnitQuantity(magnitude, x.units**0.5)
 
     mod.sqrt = _sqrt
+
+    def _square(x, /, *args, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        magnitude = xp.square(magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, x.units**2)
+
+    mod.square = _square
 
     elementwise_two_arrays = [
         "add",

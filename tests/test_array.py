@@ -570,3 +570,10 @@ class TestDivideUnits(TestArrayMethods):
         )
         assert result.units == self.ureg.m / self.ureg.s
         np.testing.assert_allclose(np.asarray(result.m_as("m/s"), dtype=float), [1.0])
+
+
+class TestSquareUnits(TestArrayMethods):
+    def test_square_units(self):
+        result = pxp.square(pxp.asarray([3.0], units="m"))
+        assert result.units == self.ureg.m**2
+        np.testing.assert_allclose(np.asarray(result.m_as("m**2"), dtype=float), [9.0])
