@@ -533,9 +533,7 @@ class TestMultiplyUnits(TestArrayMethods):
             pxp.asarray([1.0], units="m"), pxp.asarray([1.0], units="mm")
         )
         assert result.units == self.ureg.m * self.ureg.mm
-        np.testing.assert_allclose(
-            np.asarray(result.m_as("m**2"), dtype=float), [1e-3]
-        )
+        np.testing.assert_allclose(np.asarray(result.m_as("m**2"), dtype=float), [1e-3])
 
         result = pxp.multiply(
             pxp.asarray([2.0], units="m"), pxp.asarray([3.0], units="s")
@@ -565,11 +563,49 @@ class TestDivideUnits(TestArrayMethods):
         assert result.units == self.ureg.dimensionless
         np.testing.assert_allclose(np.asarray(result.m_as(""), dtype=float), [3.0])
 
+    def test_floor_divide_scale_factor(self):
+        # The units differ by a scale factor, so the magnitudes have to be
+        # brought onto a common scale before flooring: 2 m is 200 cm, and
+        # 200 cm // 3 cm is 66.
         result = pxp.floor_divide(
-            pxp.asarray([6.0], units="m"), pxp.asarray([4.0], units="s")
+            pxp.asarray([2.0], units="m"), pxp.asarray([3.0], units="cm")
         )
-        assert result.units == self.ureg.m / self.ureg.s
-        np.testing.assert_allclose(np.asarray(result.m_as("m/s"), dtype=float), [1.0])
+        assert result.units == self.ureg.dimensionless
+        np.testing.assert_allclose(np.asarray(result.m_as(""), dtype=float), [66.0])
+
+    def test_floor_divide_scale_factor_is_invariant(self):
+        # The same physical ratio written with different units must give the
+        # same answer.
+        results = [
+            pxp.floor_divide(
+                pxp.asarray([2.0], units="m"), pxp.asarray([3.0], units="cm")
+            ),
+            pxp.floor_divide(
+                pxp.asarray([200.0], units="cm"), pxp.asarray([3.0], units="cm")
+            ),
+            pxp.floor_divide(
+                pxp.asarray([2000.0], units="mm"), pxp.asarray([3.0], units="cm")
+            ),
+        ]
+        for result in results:
+            assert result.units == self.ureg.dimensionless
+            np.testing.assert_allclose(np.asarray(result.m_as(""), dtype=float), [66.0])
+
+    def test_floor_divide_matches_operator(self):
+        # The function and the operator must agree.
+        x1 = pxp.asarray([2.0], units="m")
+        x2 = pxp.asarray([3.0], units="cm")
+        np.testing.assert_allclose(
+            np.asarray(pxp.floor_divide(x1, x2).magnitude, dtype=float),
+            np.asarray(x1 // x2, dtype=float),
+        )
+
+    def test_floor_divide_incompatible_units(self):
+        # Dimensionally incompatible units cannot be floor divided.
+        with pytest.raises(DimensionalityError):
+            pxp.floor_divide(
+                pxp.asarray([6.0], units="m"), pxp.asarray([4.0], units="s")
+            )
 
 
 class TestSquareUnits(TestArrayMethods):

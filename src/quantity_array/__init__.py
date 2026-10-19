@@ -779,13 +779,24 @@ def quantity_namespace(xp):
         x1 = asarray(x1)
         x2 = asarray(x2)
 
-        units = x1.units / x2.units
-
         x1_magnitude = xp.asarray(x1.magnitude, copy=True)
-        x2_magnitude = x2.magnitude
+        x2_magnitude = xp.asarray(x2.magnitude, copy=True)
+
+        if x1.units != x2.units:
+            # The units differ, so the magnitudes are not commensurate and
+            # have to be brought onto a common scale before flooring.
+            # m_as() raises DimensionalityError for dimensionally
+            # incompatible units, as pint's Quantity.__floordiv__ does.
+            # The conversion factor is generally fractional, so this is done
+            # in floating point.
+            x1_magnitude = xp.astype(x1_magnitude, xp.float64)
+            x2_magnitude = astype(x2, xp.float64).m_as(x1.units)
 
         magnitude = xp.floor_divide(x1_magnitude, x2_magnitude, *args, **kwargs)
-        return ArrayUnitQuantity(magnitude, units)
+        # Floor division of two quantities is a count, not a ratio: it is the
+        # number of whole right-hand-side units that fit in one left-hand-side
+        # unit, so the result is dimensionless.
+        return ArrayUnitQuantity(magnitude, None)
 
     mod.floor_divide = floor_divide
 
