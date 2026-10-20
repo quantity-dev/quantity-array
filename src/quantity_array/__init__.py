@@ -975,7 +975,16 @@ def quantity_namespace(xp):
     def prod(x, /, *args, axis=None, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        exponent = magnitude.shape[axis] if axis is not None else size(magnitude)
+        if axis is None:
+            exponent = size(magnitude)
+        elif isinstance(axis, tuple):
+            # The product reduces over every given axis, so the unit is
+            # raised to the power of the total number of elements reduced.
+            exponent = 1
+            for axis_i in axis:
+                exponent *= magnitude.shape[axis_i]
+        else:
+            exponent = magnitude.shape[axis]
         units = x.units**exponent
         magnitude = xp.prod(magnitude, *args, axis=axis, **kwargs)
         return ArrayUnitQuantity(magnitude, units)

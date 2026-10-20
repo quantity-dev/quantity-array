@@ -613,3 +613,24 @@ class TestSquareUnits(TestArrayMethods):
         result = pxp.square(pxp.asarray([3.0], units="m"))
         assert result.units == self.ureg.m**2
         np.testing.assert_allclose(np.asarray(result.m_as("m**2"), dtype=float), [9.0])
+
+
+class TestProdUnits(TestArrayMethods):
+    def test_prod_units(self):
+        result = pxp.prod(pxp.asarray([[1.0, 2.0], [3.0, 4.0]], units="m"))
+        assert result.units == self.ureg.m**4
+        np.testing.assert_allclose(np.asarray(result.m_as("m**4"), dtype=float), [24.0])
+
+    def test_prod_units_axis(self):
+        result = pxp.prod(pxp.asarray([[1.0, 2.0], [3.0, 4.0]], units="m"), axis=0)
+        assert result.units == self.ureg.m**2
+        np.testing.assert_allclose(
+            np.asarray(result.m_as("m**2"), dtype=float), [3.0, 8.0]
+        )
+
+    def test_prod_units_tuple_axis(self):
+        # Reducing over several axes raises the unit to the power of the
+        # total number of elements reduced.
+        result = pxp.prod(pxp.asarray([[1.0, 2.0], [3.0, 4.0]], units="m"), axis=(0, 1))
+        assert result.units == self.ureg.m**4
+        np.testing.assert_allclose(np.asarray(result.m_as("m**4"), dtype=float), [24.0])
