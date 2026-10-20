@@ -675,7 +675,6 @@ def quantity_namespace(xp):
         "signbit",
         "sin",
         "sinh",
-        "square",
         "tan",
         "tanh",
         "trunc",
@@ -698,6 +697,14 @@ def quantity_namespace(xp):
 
     mod.sqrt = _sqrt
 
+    def _square(x, /, *args, **kwargs):
+        x = asarray(x)
+        magnitude = xp.asarray(x.magnitude, copy=True)
+        magnitude = xp.square(magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, x.units**2)
+
+    mod.square = _square
+
     elementwise_two_arrays = [
         "add",
         "atan2",
@@ -707,9 +714,7 @@ def quantity_namespace(xp):
         "bitwise_right_shift",
         "bitwise_xor",
         "copysign",
-        "divide",
         "equal",
-        "floor_divide",
         "greater",
         "greater_equal",
         "hypot",
@@ -749,12 +754,51 @@ def quantity_namespace(xp):
         units = x1.units * x2.units
 
         x1_magnitude = xp.asarray(x1.magnitude, copy=True)
-        x2_magnitude = x2.m_as(x1.units)
+        x2_magnitude = x2.magnitude
 
         magnitude = xp.multiply(x1_magnitude, x2_magnitude, *args, **kwargs)
         return ArrayUnitQuantity(magnitude, units)
 
     mod.multiply = multiply
+
+    def divide(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        units = x1.units / x2.units
+
+        x1_magnitude = xp.asarray(x1.magnitude, copy=True)
+        x2_magnitude = x2.magnitude
+
+        magnitude = xp.divide(x1_magnitude, x2_magnitude, *args, **kwargs)
+        return ArrayUnitQuantity(magnitude, units)
+
+    mod.divide = divide
+
+    def floor_divide(x1, x2, /, *args, **kwargs):
+        x1 = asarray(x1)
+        x2 = asarray(x2)
+
+        x1_magnitude = xp.asarray(x1.magnitude, copy=True)
+        x2_magnitude = xp.asarray(x2.magnitude, copy=True)
+
+        if x1.units != x2.units:
+            # The units differ, so the magnitudes are not commensurate and
+            # have to be brought onto a common scale before flooring.
+            # m_as() raises DimensionalityError for dimensionally
+            # incompatible units, as pint's Quantity.__floordiv__ does.
+            # The conversion factor is generally fractional, so this is done
+            # in floating point.
+            x1_magnitude = xp.astype(x1_magnitude, xp.float64)
+            x2_magnitude = astype(x2, xp.float64).m_as(x1.units)
+
+        magnitude = xp.floor_divide(x1_magnitude, x2_magnitude, *args, **kwargs)
+        # Floor division of two quantities is a count, not a ratio: it is the
+        # number of whole right-hand-side units that fit in one left-hand-side
+        # unit, so the result is dimensionless.
+        return ArrayUnitQuantity(magnitude, None)
+
+    mod.floor_divide = floor_divide
 
     def pow(x1, x2, /, *args, **kwargs):
         x1 = asarray(x1)
@@ -931,7 +975,16 @@ def quantity_namespace(xp):
     def prod(x, /, *args, axis=None, **kwargs):
         x = asarray(x)
         magnitude = xp.asarray(x.magnitude, copy=True)
-        exponent = magnitude.shape[axis] if axis is not None else size(magnitude)
+        if axis is None:
+            exponent = size(magnitude)
+        elif isinstance(axis, tuple):
+            # The product reduces over every given axis, so the unit is
+            # raised to the power of the total number of elements reduced.
+            exponent = 1
+            for axis_i in axis:
+                exponent *= magnitude.shape[axis_i]
+        else:
+            exponent = magnitude.shape[axis]
         units = x.units**exponent
         magnitude = xp.prod(magnitude, *args, axis=axis, **kwargs)
         return ArrayUnitQuantity(magnitude, units)

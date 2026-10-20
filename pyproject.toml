@@ -69,6 +69,10 @@ array-api-strict = "*"
 # clean array-api-tests dir
 clean-xp-tests = { cwd = ".", cmd = "rm -rf array-api-tests" }
 # clone array-api-tests
+# The checkout is pinned: the test suite tracks the array API standard and
+# regularly adds tests that the pinned array-api-strict does not implement yet
+# (finfo/iinfo with an array argument, for example).  Pinning keeps the suite
+# in step with array-api-strict so that a failure means a real regression.
 clone-xp-tests.cmd = [
     "git",
     "clone",
@@ -76,6 +80,10 @@ clone-xp-tests.cmd = [
     "&&",
     "cd",
     "array-api-tests",
+    "&&",
+    "git",
+    "checkout",
+    "c48410f96fc58e02eea844e6b7f6cc01680f77ce",
     "&&",
     "git",
     "submodule",
